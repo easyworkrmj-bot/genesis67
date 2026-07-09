@@ -460,6 +460,42 @@ export default function App() {
     }
   }, [darkMode]);
 
+  const toggleDarkMode = () => {
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    
+    // Auto-apply matching preset theme to make the transition look gorgeous
+    if (newDarkMode) {
+      const darkPreset = THEME_PRESETS.find(p => p.name === 'Deep Ocean Teal') || THEME_PRESETS[0];
+      setCustomTheme({
+        primaryAccent: darkPreset.primaryAccent,
+        headerBg: darkPreset.headerBg,
+        headerText: darkPreset.headerText,
+        tableHeaderBg: darkPreset.tableHeaderBg,
+        tableHeaderTextColor: darkPreset.tableHeaderTextColor,
+        textColor: darkPreset.textColor,
+        cardBg: darkPreset.cardBg,
+        sidebarBg: darkPreset.sidebarBg,
+        sidebarText: darkPreset.sidebarText,
+      });
+      triggerToast('🌒 Mode sombre activé (Thème Deep Ocean Teal appliqué)', 'info');
+    } else {
+      const lightPreset = THEME_PRESETS.find(p => p.name === 'Nordic Light Snow') || THEME_PRESETS[6] || THEME_PRESETS[THEME_PRESETS.length - 1];
+      setCustomTheme({
+        primaryAccent: lightPreset.primaryAccent,
+        headerBg: lightPreset.headerBg,
+        headerText: lightPreset.headerText,
+        tableHeaderBg: lightPreset.tableHeaderBg,
+        tableHeaderTextColor: lightPreset.tableHeaderTextColor,
+        textColor: lightPreset.textColor,
+        cardBg: lightPreset.cardBg,
+        sidebarBg: lightPreset.sidebarBg,
+        sidebarText: lightPreset.sidebarText,
+      });
+      triggerToast('☀️ Mode clair activé (Thème Nordic Light Snow appliqué)', 'info');
+    }
+  };
+
   // Persistence for user saved snapshots database
   useEffect(() => {
     localStorage.setItem('packing_list_pro_saved_lists', JSON.stringify(savedLists));
@@ -2100,7 +2136,6 @@ export default function App() {
   };
 
   const getSidebarItemInlineStyle = (tabName: string) => {
-    if (darkMode) return undefined;
     const isActive = activeInputTab === tabName;
     return {
       backgroundColor: isActive ? customTheme.primaryAccent : 'transparent',
@@ -2110,7 +2145,6 @@ export default function App() {
   };
 
   const getSidebarItemIconInlineStyle = (tabName: string) => {
-    if (darkMode) return undefined;
     const isActive = activeInputTab === tabName;
     return {
       backgroundColor: isActive ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
@@ -2119,7 +2153,6 @@ export default function App() {
   };
 
   const getSidebarItemSubtextInlineStyle = (tabName: string) => {
-    if (darkMode) return undefined;
     const isActive = activeInputTab === tabName;
     return {
       color: isActive ? customTheme.headerText : customTheme.sidebarText,
@@ -2128,7 +2161,6 @@ export default function App() {
   };
 
   const getSidebarHighlightInlineStyle = (tabName: string) => {
-    if (darkMode) return undefined;
     const isActive = activeInputTab === tabName;
     return {
       backgroundColor: customTheme.headerText,
@@ -2187,8 +2219,8 @@ export default function App() {
           --sidebar-text: ${customTheme.sidebarText};
         }
 
-        /* Override slate color system when custom theme is active and not in dark mode */
-        html:not(.dark) {
+        /* Override slate color system when custom theme is active */
+        :root {
           --slate-100: ${customTheme.textColor};
           --slate-200: ${customTheme.textColor};
           --slate-300: ${customTheme.textColor};
@@ -2201,147 +2233,147 @@ export default function App() {
           --slate-205: ${customTheme.primaryAccent}20;
         }
 
-        /* Override general body background and text colors in light mode */
-        html:not(.dark) body, html:not(.dark) .min-h-screen {
+        /* Override general body background and text colors */
+        body, .min-h-screen {
           background-color: var(--card-bg) !important;
           color: var(--body-text) !important;
         }
 
-        /* Override general text color classes in light mode to guarantee high contrast */
-        html:not(.dark) .text-slate-950,
-        html:not(.dark) .text-slate-900, 
-        html:not(.dark) .text-slate-800, 
-        html:not(.dark) .text-slate-700, 
-        html:not(.dark) .text-slate-650,
-        html:not(.dark) .text-slate-755,
-        html:not(.dark) .text-slate-855,
-        html:not(.dark) .text-slate-600,
-        html:not(.dark) .text-slate-500,
-        html:not(.dark) .text-slate-450,
-        html:not(.dark) .text-[#0d0b0b],
-        html:not(.dark) .text-black,
-        html:not(.dark) .text-blue-950,
-        html:not(.dark) .text-blue-100 {
+        /* Override general text color classes to guarantee high contrast */
+        .text-slate-950,
+        .text-slate-900, 
+        .text-slate-800, 
+        .text-slate-700, 
+        .text-slate-650,
+        .text-slate-755,
+        .text-slate-855,
+        .text-slate-600,
+        .text-slate-500,
+        .text-slate-450,
+        .text-[#0d0b0b],
+        .text-black,
+        .text-blue-950,
+        .text-blue-100 {
           color: var(--body-text) !important;
         }
 
-        html:not(.dark) .text-slate-400 {
+        .text-slate-400 {
           color: var(--body-text) !important;
           opacity: 0.7 !important;
         }
 
-        /* Override container cards background and borders in light mode */
-        html:not(.dark) .rounded-2xl.border, 
-        html:not(.dark) .rounded-xl.border,
-        html:not(.dark) .rounded-lg.border {
+        /* Override container cards background and borders */
+        .rounded-2xl.border, 
+        .rounded-xl.border,
+        .rounded-lg.border {
           background-color: var(--card-bg) !important;
           border-color: var(--primary-accent)25 !important;
         }
 
         /* Override general white backgrounds to dynamically match the selected cardBg */
-        html:not(.dark) .bg-white,
-        html:not(.dark) .\\!bg-white,
-        html:not(.dark) tr.bg-white,
-        html:not(.dark) div.bg-white,
-        html:not(.dark) td.bg-white {
+        .bg-white,
+        .\!bg-white,
+        tr.bg-white,
+        div.bg-white,
+        td.bg-white {
           background-color: var(--card-bg) !important;
         }
 
-        /* Override nested light panels & colored backgrounds in light mode to prevent solid white blocks */
-        html:not(.dark) .bg-slate-50,
-        html:not(.dark) .bg-slate-100,
-        html:not(.dark) .bg-slate-200,
-        html:not(.dark) .bg-slate-50\\/50,
-        html:not(.dark) .bg-[#f4f6fb]\\/50,
-        html:not(.dark) .bg-[#f4f6fb],
-        html:not(.dark) .bg-[#fbf5f5],
-        html:not(.dark) .bg-[#f8fafc],
-        html:not(.dark) .bg-[#f0f4f8],
-        html:not(.dark) .bg-[#fcfdfe],
-        html:not(.dark) .bg-[#f4f7fc],
-        html:not(.dark) .bg-[#f8f9fa],
-        html:not(.dark) .bg-slate-100\\/30,
-        html:not(.dark) .bg-slate-100\\/40,
-        html:not(.dark) .bg-slate-100\\/50,
-        html:not(.dark) .bg-slate-100\\/60,
-        html:not(.dark) .bg-slate-200\\/10,
-        html:not(.dark) .bg-slate-200\\/50,
-        html:not(.dark) .bg-[#ff5000]\\/5 {
+        /* Override nested light panels & colored backgrounds to prevent solid white blocks */
+        .bg-slate-50,
+        .bg-slate-100,
+        .bg-slate-200,
+        .bg-slate-50\\/50,
+        .bg-[#f4f6fb]\\/50,
+        .bg-[#f4f6fb],
+        .bg-[#fbf5f5],
+        .bg-[#f8fafc],
+        .bg-[#f0f4f8],
+        .bg-[#fcfdfe],
+        .bg-[#f4f7fc],
+        .bg-[#f8f9fa],
+        .bg-slate-100\\/30,
+        .bg-slate-100\\/40,
+        .bg-slate-100\\/50,
+        .bg-slate-100\\/60,
+        .bg-slate-200\\/10,
+        .bg-slate-200\\/50,
+        .bg-[#ff5000]\\/5 {
           background-color: var(--card-bg) !important;
           background-image: linear-gradient(rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04)) !important;
           border-color: var(--primary-accent)20 !important;
         }
 
-        /* Hover states in light mode */
-        html:not(.dark) .hover\\:bg-slate-50:hover,
-        html:not(.dark) .hover\\:bg-slate-100:hover,
-        html:not(.dark) .hover\\:bg-slate-100\\/40:hover,
-        html:not(.dark) .hover\\:bg-white\\/5:hover {
+        /* Hover states */
+        .hover\\:bg-slate-50:hover,
+        .hover\\:bg-slate-100:hover,
+        .hover\\:bg-slate-100\\/40:hover,
+        .hover\\:bg-white\\/5:hover {
           background-color: var(--card-bg) !important;
           background-image: linear-gradient(rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08)) !important;
         }
 
-        /* Override inputs, select and textarea in light mode */
-        html:not(.dark) input,
-        html:not(.dark) select,
-        html:not(.dark) textarea {
+        /* Override inputs, select and textarea */
+        input,
+        select,
+        textarea {
           background-color: ${customTheme.cardBg === '#FFFFFF' ? '#FFFFFF' : 'rgba(255, 255, 255, 0.05)'} !important;
           color: var(--body-text) !important;
           border-color: var(--primary-accent)30 !important;
         }
-        html:not(.dark) input:focus,
-        html:not(.dark) select:focus,
-        html:not(.dark) textarea:focus {
+        input:focus,
+        select:focus,
+        textarea:focus {
           border-color: var(--primary-accent) !important;
           box-shadow: 0 0 0 1px var(--primary-accent)20 !important;
         }
 
         /* Overrides for table headers inside standard elements */
-        html:not(.dark) table thead tr,
-        html:not(.dark) table thead th,
-        html:not(.dark) table thead td {
+        table thead tr,
+        table thead th,
+        table thead td {
           background-color: var(--table-header-bg) !important;
           color: var(--table-header-text) !important;
           border-color: var(--primary-accent)20 !important;
         }
 
         /* Table borders and padding */
-        html:not(.dark) table td, html:not(.dark) table th {
+        table td, table th {
           border-color: var(--primary-accent)15 !important;
           color: var(--body-text) !important;
         }
 
         /* Indicator bars (e.g. w-2.5 h-5 rounded-md) */
-        html:not(.dark) .rounded-md.bg-gradient-to-b {
+        .rounded-md.bg-gradient-to-b {
           background: var(--primary-accent) !important;
         }
 
-        /* Override primary brand color in light mode to match dynamic accent */
-        html:not(.dark) .bg-\[\#ff5000\] {
+        /* Override primary brand color to match dynamic accent */
+        .bg-\\[\\#ff5000\\] {
           background-color: var(--primary-accent) !important;
         }
-        html:not(.dark) .text-\[\#ff5000\] {
+        .text-\\[\\#ff5000\\] {
           color: var(--primary-accent) !important;
         }
-        html:not(.dark) .border-\[\#ff5000\] {
+        .border-\\[\\#ff5000\\] {
           border-color: var(--primary-accent) !important;
         }
-        html:not(.dark) .bg-\[\#ff5000\]\\/5 {
+        .bg-\\[\\#ff5000\\]\\/5 {
           background-color: var(--primary-accent)0d !important;
         }
-        html:not(.dark) .bg-\[\#ff5000\]\\/10 {
+        .bg-\\[\\#ff5000\\]\\/10 {
           background-color: var(--primary-accent)1a !important;
         }
-        html:not(.dark) .border-\[\#ff5000\]\\/20 {
+        .border-\\[\\#ff5000\\]\\/20 {
           border-color: var(--primary-accent)33 !important;
         }
-        html:not(.dark) .border-\[\#ff5000\]\\/30 {
+        .border-\\[\\#ff5000\\]\\/30 {
           border-color: var(--primary-accent)4d !important;
         }
-        html:not(.dark) .hover\\:bg-\[\#ff5000\]:hover {
+        .hover\\:bg-\\[\\#ff5000\\]:hover {
           background-color: var(--primary-accent) !important;
         }
-        html:not(.dark) .hover\\:bg-\[\#ff5000\]\\/90:hover {
+        .hover\\:bg-\\[\\#ff5000\\]\\/90:hover {
           background-color: var(--primary-accent)e6 !important;
         }
 
@@ -2763,9 +2795,14 @@ export default function App() {
       {/* HEADER & ACTIONS TOP BLOCK (STICKY) */}
 
 
-      <div className={`sticky top-0 z-40 print:hidden transition-all duration-300 border-b pb-1.5 shadow-md ${
-        darkMode ? 'bg-[#0C0C0E]/95 border-white/10 shadow-black/40' : 'bg-[#001A4F] border-[#001135] shadow-slate-900/10'
-      } backdrop-blur-md`}>
+      <div 
+        className="sticky top-0 z-40 print:hidden transition-all duration-300 border-b pb-1.5 shadow-md backdrop-blur-md"
+        style={{ 
+          backgroundColor: customTheme.headerBg + 'f2', // 95% opacity for beautiful backdrop blur
+          borderColor: customTheme.primaryAccent + '30',
+          color: customTheme.headerText
+        }}
+      >
         {/* Sleek Top Bar containing GENERATE, Reset, Excel, PDF, SQL Export, SQL Import, Mode toggle */}
         <div className="w-full max-w-full px-4 lg:px-8 xl:px-12 mx-auto py-3 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-4">
@@ -2777,7 +2814,7 @@ export default function App() {
             <div className="flex flex-col border-l border-white/10 pl-3 justify-center">
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-black tracking-wider uppercase font-sans text-white">
-                  Andry <span className={darkMode ? 'text-white' : 'text-[#FFE100]'}>Nantenaina</span>
+                  Andry <span style={{ color: customTheme.primaryAccent }}>Nantenaina</span>
                 </span>
               </div>
             </div>
@@ -2789,49 +2826,52 @@ export default function App() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Rechercher couleur, SKU, taille..."
-                className={`w-full pl-3 pr-9 py-1 rounded-lg text-xs text-white focus:outline-none focus:ring-1 transition-all ${
-                  darkMode 
-                    ? 'bg-[#151518] border border-white/10 placeholder:text-white/30 focus:ring-white focus:border-white' 
-                    : 'bg-[#001135]/40 border border-blue-900/50 placeholder:text-blue-200/50 focus:ring-[#FFE100] focus:border-[#FFE100]'
-                }`}
+                className="w-full pl-3 pr-9 py-1 rounded-lg text-xs focus:outline-none focus:ring-1 transition-all bg-black/15 border border-white/10 placeholder:text-white/40"
+                style={{ 
+                  color: customTheme.headerText, 
+                  borderColor: customTheme.primaryAccent + '40',
+                }}
               />
-              <div className={`absolute right-2.5 top-2 ${darkMode ? 'text-white/50' : 'text-blue-300'}`}>
+              <div className="absolute right-2.5 top-2" style={{ color: customTheme.primaryAccent }}>
                 <Search className="w-3 h-3" />
               </div>
             </div>
 
             {/* Live Totals Summary (Pcs, Crt, Vol) */}
-            <div className={`flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 border rounded-lg text-white font-mono text-[10px] sm:text-xs shadow-inner select-none ${
-              darkMode ? 'bg-[#151518] border-white/10' : 'bg-blue-950/40 border-blue-900/50'
-            }`}>
+            <div 
+              className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 border rounded-lg font-mono text-[10px] sm:text-xs shadow-inner select-none bg-black/10"
+              style={{ borderColor: customTheme.primaryAccent + '25', color: customTheme.headerText }}
+            >
               <div className="flex items-center gap-1">
-                <span className={`text-[9px] sm:text-[10px] uppercase tracking-wider font-extrabold ${darkMode ? 'text-white/40' : 'text-blue-300'}`}>Pcs:</span>
-                <span className={`font-bold ${darkMode ? 'text-white font-black' : 'text-[#FFE100]'}`}>{grandTotals.p.toLocaleString('fr-FR')}</span>
+                <span className="text-[9px] sm:text-[10px] uppercase tracking-wider font-extrabold opacity-70">Pcs:</span>
+                <span className="font-bold" style={{ color: customTheme.primaryAccent }}>{grandTotals.p.toLocaleString('fr-FR')}</span>
               </div>
               <div className="h-3 w-px bg-white/10" />
               <div className="flex items-center gap-1">
-                <span className={`text-[9px] sm:text-[10px] uppercase tracking-wider font-extrabold ${darkMode ? 'text-white/40' : 'text-blue-300'}`}>Crt:</span>
-                <span className={`font-bold ${darkMode ? 'text-white font-black' : 'text-[#FFE100]'}`}>{grandTotals.c.toLocaleString('fr-FR')}</span>
+                <span className="text-[9px] sm:text-[10px] uppercase tracking-wider font-extrabold opacity-70">Crt:</span>
+                <span className="font-bold" style={{ color: customTheme.primaryAccent }}>{grandTotals.c.toLocaleString('fr-FR')}</span>
               </div>
               <div className="h-3 w-px bg-white/10" />
               <div className="flex items-center gap-1">
-                <span className={`text-[9px] sm:text-[10px] uppercase tracking-wider font-extrabold ${darkMode ? 'text-white/40' : 'text-blue-300'}`}>Vol:</span>
-                <span className={`font-bold ${darkMode ? 'text-white font-black' : 'text-[#FFE100]'}`}>{grandTotals.v.toFixed(3)} m³</span>
+                <span className="text-[9px] sm:text-[10px] uppercase tracking-wider font-extrabold opacity-70">Vol:</span>
+                <span className="font-bold" style={{ color: customTheme.primaryAccent }}>{grandTotals.v.toFixed(3)} m³</span>
               </div>
             </div>
           </div>
 
-          <div className={`flex items-center gap-2 flex-wrap p-2.5 rounded-xl border shadow-md transition-colors ${
-            darkMode ? 'bg-[#151518] border-white/10 text-white' : 'bg-[#0e4f62] text-white border-blue-500/40'
-          }`}>
-            {/* CTA Generer styled as Cdiscount's Adding to Cart CTA button (Energetic Yellow/Orange) */}
+          <div 
+            className="flex items-center gap-2 flex-wrap p-2.5 rounded-xl border shadow-md transition-colors bg-black/10"
+            style={{ borderColor: customTheme.primaryAccent + '25' }}
+          >
+            {/* CTA Generer styled dynamically to match theme colors and grab attention */}
             <button
               onClick={handleGenerateList}
-              className={`px-3.5 py-1.5 font-black rounded-lg text-[11px] transition-all focus:outline-none flex items-center gap-1.5 cursor-pointer shadow-md hover:scale-[1.01] active:scale-[0.99] uppercase tracking-wider font-sans ${
-                darkMode
-                  ? 'bg-white hover:bg-neutral-200 text-[#0C0C0E] border border-white/10 shadow-white/5'
-                  : 'bg-[#FFE100] hover:bg-[#ffe733] text-[#001e62] shadow-amber-500/15 animate-pulse hover:animate-none'
-              }`}
+              className="px-3.5 py-1.5 font-black rounded-lg text-[11px] transition-all focus:outline-none flex items-center gap-1.5 cursor-pointer shadow-md hover:scale-[1.01] active:scale-[0.99] uppercase tracking-wider font-sans"
+              style={{ 
+                backgroundColor: customTheme.primaryAccent, 
+                color: customTheme.headerBg === '#FFFFFF' ? '#000000' : '#FFFFFF',
+                boxShadow: `0 4px 12px ${customTheme.primaryAccent}33`
+              }}
             >
               <Calculator className={`w-3.5 h-3.5 ${darkMode ? 'text-[#0C0C0E]' : 'text-[#001e62]'}`} />
               <span>GÉNÉRER / CALCULER</span>
@@ -2840,28 +2880,31 @@ export default function App() {
             {/* Admin / Utility actions */}
             <button
               onClick={() => setIsMajBsdOpen(true)}
-              className="px-2 py-1.5 border border-white/10 hover:bg-white/5 rounded-lg text-[11px] font-bold text-white/95 transition-all cursor-pointer flex items-center gap-1 hover:scale-[1.02]"
+              className="px-2 py-1.5 border rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 hover:scale-[1.02] bg-white/5 hover:bg-white/10"
+              style={{ borderColor: customTheme.primaryAccent + '25', color: customTheme.headerText }}
               title="🗂️ MAJ BSD (Gabarits)"
             >
-              <Database className={`w-3 h-3 ${darkMode ? 'text-white' : 'text-[#FFE100]'}`} />
+              <Database className="w-3 h-3" style={{ color: customTheme.primaryAccent }} />
               <span className="hidden sm:inline">Gabarits</span>
             </button>
 
             <button
               onClick={() => setIsCapturingScreen(true)}
-              className="px-2 py-1.5 border border-white/10 hover:bg-white/5 rounded-lg text-[11px] font-bold text-white/95 transition-all cursor-pointer flex items-center gap-1 hover:scale-[1.02]"
+              className="px-2 py-1.5 border rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 hover:scale-[1.02] bg-white/5 hover:bg-white/10"
+              style={{ borderColor: customTheme.primaryAccent + '25', color: customTheme.headerText }}
               title="📸 CAPTURE D'ÉCRAN"
             >
-              <Camera className={`w-3 h-3 ${darkMode ? 'text-white' : 'text-blue-300'}`} />
+              <Camera className="w-3 h-3" style={{ color: customTheme.primaryAccent }} />
               <span className="hidden sm:inline">Capture</span>
             </button>
 
             <button
               onClick={() => setIsAuthenticated(false)}
-              className="px-2 py-1.5 border border-white/10 hover:bg-white/5 rounded-lg text-[11px] font-bold text-rose-200 hover:text-rose-100 transition-all cursor-pointer flex items-center gap-1 hover:scale-[1.02]"
+              className="px-2 py-1.5 border rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 hover:scale-[1.02] bg-white/5 hover:bg-white/10"
+              style={{ borderColor: customTheme.primaryAccent + '25', color: customTheme.headerText }}
               title="🚪 SE DÉCONNECTER"
             >
-              <LogOut className={`w-3 h-3 ${darkMode ? 'text-white' : 'text-[#E51B22]'}`} />
+              <LogOut className="w-3 h-3 text-rose-400" />
               <span className="hidden sm:inline">Déconnexion</span>
             </button>
 
@@ -2873,11 +2916,12 @@ export default function App() {
                 className={`px-3 py-1.5 text-[11px] font-bold rounded-lg border transition-all flex items-center gap-1 cursor-pointer shadow-sm hover:scale-[1.02] active:scale-[0.98] ${
                   !hasGenerated
                     ? 'bg-[#E51B22] border-[#E51B22] text-white font-extrabold animate-pulse shadow-md shadow-red-500/20'
-                    : 'bg-white/5 hover:bg-white/10 border-white/10 text-white font-bold'
+                    : 'bg-white/5 hover:bg-white/10 text-white font-bold'
                 }`}
+                style={hasGenerated ? { borderColor: customTheme.primaryAccent + '25', color: customTheme.headerText } : undefined}
                 title={!hasGenerated ? "Cliquez ici pour recalculer et appliquer vos modifications !" : "Les calculs sont à jour"}
               >
-                <RefreshCw className={`w-3 h-3 ${!hasGenerated ? 'animate-spin' : ''}`} style={!hasGenerated ? { animationDuration: '2.5s' } : undefined} />
+                <RefreshCw className={`w-3 h-3 ${!hasGenerated ? 'animate-spin' : ''}`} style={!hasGenerated ? { animationDuration: '2.5s' } : { color: customTheme.primaryAccent }} />
                 <span>{!hasGenerated ? 'RE-CALCUL REQUIS' : 'À JOUR'}</span>
               </button>
             )}
@@ -2885,10 +2929,11 @@ export default function App() {
             {!showResetConfirm ? (
               <button
                 onClick={() => setShowResetConfirm(true)}
-                className="px-2.5 py-1.5 border border-white/10 hover:bg-white/5 rounded-lg text-[11px] font-bold text-white transition-all cursor-pointer flex items-center gap-1"
+                className="px-2.5 py-1.5 border rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 bg-white/5 hover:bg-white/10"
+                style={{ borderColor: customTheme.primaryAccent + '25', color: customTheme.headerText }}
                 title="Saisir à zéro"
               >
-                <RefreshCw className={`w-3 h-3 ${darkMode ? 'text-white' : 'text-[#FFE100]'}`} />
+                <RefreshCw className="w-3 h-3" style={{ color: customTheme.primaryAccent }} />
                 <span>Réinitialiser</span>
               </button>
             ) : (
@@ -2913,27 +2958,21 @@ export default function App() {
 
             <button
               onClick={handleExcelExport}
-              className={`px-2.5 py-1.5 text-[11px] font-semibold rounded-lg border hover:scale-[1.02] cursor-pointer transition-all flex items-center gap-1 ${
-                darkMode
-                  ? 'bg-white/5 hover:bg-white/10 border-white/10 text-white font-bold'
-                  : 'bg-slate-800 hover:bg-slate-900 border-slate-700 text-white font-bold shadow-md shadow-slate-800/10'
-              }`}
+              className="px-2.5 py-1.5 text-[11px] font-bold rounded-lg border hover:scale-[1.02] cursor-pointer transition-all flex items-center gap-1 bg-white/5 hover:bg-white/10"
+              style={{ borderColor: customTheme.primaryAccent + '25', color: customTheme.headerText }}
               title="Exporter vers Microsoft Excel"
             >
-              <FileSpreadsheet className={`w-3 h-3 ${darkMode ? 'text-white/70' : 'text-white'}`} />
+              <FileSpreadsheet className="w-3 h-3" style={{ color: customTheme.primaryAccent }} />
               <span>Excel</span>
             </button>
 
             <button
               onClick={handleOpenPdfPrintSelector}
-              className={`px-2.5 py-1.5 text-[11px] font-semibold rounded-lg border hover:scale-[1.02] cursor-pointer transition-all flex items-center gap-1 ${
-                darkMode
-                  ? 'bg-white/5 hover:bg-white/10 border-white/10 text-white font-bold'
-                  : 'bg-slate-800 hover:bg-slate-900 border-slate-700 text-white font-bold shadow-md shadow-slate-800/10'
-              }`}
+              className="px-2.5 py-1.5 text-[11px] font-bold rounded-lg border hover:scale-[1.02] cursor-pointer transition-all flex items-center gap-1 bg-white/5 hover:bg-white/10"
+              style={{ borderColor: customTheme.primaryAccent + '25', color: customTheme.headerText }}
               title="Générer un PDF / Imprimer"
             >
-              <FileText className={`w-3 h-3 ${darkMode ? 'text-white/70' : 'text-white'}`} />
+              <FileText className="w-3 h-3" style={{ color: customTheme.primaryAccent }} />
               <span>PDF / Imprimer</span>
             </button>
 
@@ -2941,40 +2980,33 @@ export default function App() {
 
             <button
               onClick={handleExportSQL}
-              className={`px-2.5 py-1.5 text-[11px] font-semibold rounded-lg border hover:scale-[1.02] cursor-pointer transition-all flex items-center gap-1 ${
-                darkMode
-                  ? 'bg-white/5 hover:bg-white/10 border-white/10 text-white font-bold'
-                  : 'bg-slate-800 hover:bg-slate-900 border-slate-700 text-white font-bold shadow-md shadow-slate-800/10'
-              }`}
+              className="px-2.5 py-1.5 text-[11px] font-bold rounded-lg border hover:scale-[1.02] cursor-pointer transition-all flex items-center gap-1 bg-white/5 hover:bg-white/10"
+              style={{ borderColor: customTheme.primaryAccent + '25', color: customTheme.headerText }}
               title="Exporter la base au format SQL"
             >
-              <Database className={`w-3 h-3 ${darkMode ? 'text-white/70' : 'text-white'}`} />
+              <Database className="w-3 h-3" style={{ color: customTheme.primaryAccent }} />
               <span>SQL Export</span>
             </button>
 
             <button
               onClick={() => setIsSqlImportOpen(true)}
-              className={`px-2.5 py-1.5 text-[11px] font-semibold rounded-lg border transition-all flex items-center gap-1 cursor-pointer ${
-                darkMode
-                  ? 'bg-white/5 hover:bg-white/10 border-white/10 text-white font-bold'
-                  : 'bg-slate-800 hover:bg-slate-900 border-slate-700 text-white font-bold shadow-md shadow-slate-800/10'
-              }`}
+              className="px-2.5 py-1.5 text-[11px] font-bold rounded-lg border transition-all flex items-center gap-1 cursor-pointer bg-white/5 hover:bg-white/10"
+              style={{ borderColor: customTheme.primaryAccent + '25', color: customTheme.headerText }}
               title="Restaurer à partir d'un fichier SQL"
             >
-              <Upload className={`w-3 h-3 ${darkMode ? 'text-white/70' : 'text-white'}`} style={undefined} />
+              <Upload className="w-3 h-3" style={{ color: customTheme.primaryAccent }} />
               <span>SQL Import</span>
             </button>
 
             <div className="h-4 w-px bg-white/15 mx-1" />
 
             <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`p-1.5 rounded-lg border cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] ${
-                darkMode ? 'border-slate-800 bg-slate-900 text-amber-400 hover:text-white' : 'border-slate-300 bg-white text-slate-600 hover:text-black'
-              }`}
+              onClick={toggleDarkMode}
+              className="p-1.5 rounded-lg border cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] bg-white/5 hover:bg-white/10"
+              style={{ borderColor: customTheme.primaryAccent + '25', color: customTheme.headerText }}
               title={darkMode ? "Mode Clair" : "Mode Sombre"}
             >
-              {darkMode ? <Sun className="w-3 h-3" /> : <Moon className="w-3 h-3" />}
+              {darkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5" />}
             </button>
           </div>
         </div>
@@ -3021,7 +3053,7 @@ export default function App() {
               flex-col gap-2.5 lg:h-full lg:overflow-y-auto overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 scrollbar-none border rounded-2xl p-3 shadow-lg text-white
               ${darkMode ? 'bg-[#0F0F12] border-white/10' : 'bg-[#0b5870] border-[#f5f0f0]'}
             `}
-            style={darkMode ? undefined : { backgroundColor: customTheme.sidebarBg, color: customTheme.sidebarText, borderColor: customTheme.primaryAccent + '30' }}
+            style={{ backgroundColor: customTheme.sidebarBg, color: customTheme.sidebarText, borderColor: customTheme.primaryAccent + '30' }}
           >
             {/* COLLAPSE/EXPAND TOGGLE HEADER - DESKTOP ONLY */}
             <div className={`hidden lg:flex items-center justify-between border-b pb-2 ${
@@ -3032,7 +3064,7 @@ export default function App() {
                   className={`text-[10px] font-mono tracking-wider font-extrabold uppercase ${
                     darkMode ? 'text-white/60' : 'text-blue-100'
                   }`}
-                  style={darkMode ? undefined : { color: customTheme.sidebarText, opacity: 0.7 }}
+                  style={{ color: customTheme.sidebarText, opacity: 0.7 }}
                 >
                   🧭 Navigation
                 </span>
@@ -3044,7 +3076,7 @@ export default function App() {
                     ? 'border-white/10 bg-white/5 text-white hover:bg-white/10 hover:scale-[1.05] active:scale-[0.95]' 
                     : 'border-blue-400/50 bg-blue-700/40 text-blue-100 hover:text-white hover:bg-blue-50 hover:scale-[1.05] active:scale-[0.95]'
                 }`}
-                style={darkMode ? undefined : { borderColor: customTheme.primaryAccent + '40', backgroundColor: 'rgba(255, 255, 255, 0.05)', color: customTheme.sidebarText }}
+                style={{ borderColor: customTheme.primaryAccent + '40', backgroundColor: 'rgba(255, 255, 255, 0.05)', color: customTheme.sidebarText }}
                 title={isSidebarCollapsed ? "Déployer le panneau" : "Réduire le panneau"}
               >
                 {isSidebarCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
@@ -3058,7 +3090,7 @@ export default function App() {
                   className={`px-1 text-[9px] font-mono tracking-wider font-extrabold uppercase mb-1 transition-colors select-none ${
                     darkMode ? 'text-white/40' : 'text-blue-200/90'
                   }`}
-                  style={darkMode ? undefined : { color: customTheme.sidebarText, opacity: 0.5 }}
+                  style={{ color: customTheme.sidebarText, opacity: 0.5 }}
                 >
                   ✍️ SAISIE
                 </div>
@@ -3238,7 +3270,7 @@ export default function App() {
             {/* SEPARATOR */}
             <div 
               className={`h-px my-1 ${darkMode ? 'bg-white/10' : 'bg-blue-400/30'} ${isSidebarCollapsed ? 'w-8' : 'w-full'}`}
-              style={darkMode ? undefined : { backgroundColor: customTheme.primaryAccent + '25' }}
+              style={{ backgroundColor: customTheme.primaryAccent + '25' }}
             />
 
             {/* SECTION 2: SUIVI (PACKING LIST / BREAKDOWN / RECAP / SAUVEGARDES) */}
@@ -3248,7 +3280,7 @@ export default function App() {
                   className={`px-1 text-[9px] font-mono tracking-wider font-extrabold uppercase mb-1 transition-colors select-none ${
                     darkMode ? 'text-white/40' : 'text-blue-200/90'
                   }`}
-                  style={darkMode ? undefined : { color: customTheme.sidebarText, opacity: 0.5 }}
+                  style={{ color: customTheme.sidebarText, opacity: 0.5 }}
                 >
                   📊 SUIVI & LIVRABLES
                 </div>
