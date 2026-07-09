@@ -23,6 +23,7 @@ export default function MajBsdModal({
   const [selectedIdx, setSelectedIdx] = useState<number>(-1);
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [statusMsg, setStatusMsg] = useState<{ text: string; isError: boolean } | null>(null);
+  const [deleteConfirmIdx, setDeleteConfirmIdx] = useState<number>(-1);
 
   // Form states
   const [formName, setFormName] = useState('');
@@ -37,6 +38,7 @@ export default function MajBsdModal({
     setSelectedIdx(-1);
     setIsCreating(false);
     setStatusMsg(null);
+    setDeleteConfirmIdx(-1);
     clearForm();
   }, [activeTab, isOpen]);
 
@@ -61,6 +63,7 @@ export default function MajBsdModal({
     setSelectedIdx(idx);
     setIsCreating(false);
     setStatusMsg(null);
+    setDeleteConfirmIdx(-1);
 
     const model = getActiveList()[idx];
     if (!model) return;
@@ -84,6 +87,7 @@ export default function MajBsdModal({
     setSelectedIdx(-1);
     setIsCreating(true);
     setStatusMsg(null);
+    setDeleteConfirmIdx(-1);
     clearForm();
   };
 
@@ -93,7 +97,11 @@ export default function MajBsdModal({
     const model = list[selectedIdx];
     if (!model) return;
 
-    if (!window.confirm(`Supprimer le modèle "${model.name}" ?`)) return;
+    if (deleteConfirmIdx !== selectedIdx) {
+      setDeleteConfirmIdx(selectedIdx);
+      setStatusMsg({ text: `⚠️ Cliquer à nouveau pour CONFIRMER la suppression de "${model.name}".`, isError: true });
+      return;
+    }
 
     const updatedDb = { ...database };
     if (activeTab === 'dim') {
@@ -106,6 +114,7 @@ export default function MajBsdModal({
 
     onSaveDatabase(updatedDb);
     setSelectedIdx(-1);
+    setDeleteConfirmIdx(-1);
     clearForm();
     setStatusMsg({ text: '✅ Modèle supprimé de la base de données.', isError: false });
   };

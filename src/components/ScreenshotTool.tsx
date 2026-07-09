@@ -308,7 +308,7 @@ export default function ScreenshotTool({ isCapturing, setIsCapturing, darkMode }
         }
       } catch (err: any) {
         console.error('Erreur capturing viewport:', err);
-        alert(`Échec de capture d'écran: ${err.message}`);
+        triggerToast(`⚠️ Échec de capture d'écran: ${err.message}`);
       }
     }, 80);
   };
@@ -589,7 +589,7 @@ export default function ScreenshotTool({ isCapturing, setIsCapturing, darkMode }
 
     finalCanvas.toBlob((blob) => {
       if (!blob) {
-        alert('Échec de compilation pour le presse-papiers.');
+        triggerToast('⚠️ Échec de compilation pour le presse-papiers.');
         return;
       }
       
@@ -598,7 +598,7 @@ export default function ScreenshotTool({ isCapturing, setIsCapturing, darkMode }
         triggerToast('⚡ Succès! Capture copiée dans le presse-papiers.');
       }).catch((err) => {
         console.error('Clipboard copy error:', err);
-        alert(`Échec de la copie au presse-papiers: ${err.message}. Essayez le téléchargement.`);
+        triggerToast(`⚠️ Échec de la copie au presse-papiers: ${err.message}. Essayez le téléchargement.`);
       });
     }, 'image/png');
   };

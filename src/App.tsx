@@ -650,7 +650,7 @@ export default function App() {
 
   const handleRemoveActiveColorTab = () => {
     if (colors.length <= 1) {
-      alert('Un minimum d\'une couleur est requis.');
+      triggerToast('Un minimum d\'une couleur est requis.', 'error');
       return;
     }
     const nextColors = colors.filter((_, idx) => idx !== activeColorIdx);
@@ -872,7 +872,7 @@ export default function App() {
   const handleRemoveLastSizeColumn = () => {
     const model = colors[activeColorIdx];
     if (model.tailles.length <= 1) {
-      alert('Minimum 1 taille requise.');
+      triggerToast('Minimum 1 taille requise.', 'error');
       return;
     }
 
@@ -969,7 +969,7 @@ export default function App() {
 
     const newSizesList = generateSizeRange(trimmed);
     if (!newSizesList || newSizesList.length === 0) {
-      alert("Format de range de tailles invalide.\nExemples :\n• XS - 2XL (XS, S, M, L, XL, 2XL)\n• 1 - 6 (1, 2, 3, 4, 5, 6)\n• 36 - 46 (36, 38, 40, 42, 44, 46)\n• A - F (A, B, C, D, E, F)");
+      triggerToast("Format de range de tailles invalide.\nExemples :\n• XS - 2XL (XS, S, M, L, XL, 2XL)\n• 1 - 6 (1, 2, 3, 4, 5, 6)\n• 36 - 46 (36, 38, 40, 42, 44, 46)\n• A - F (A, B, C, D, E, F)", 'error');
       return;
     }
 
@@ -1018,13 +1018,13 @@ export default function App() {
     const activeColor = colors[activeColorIdx];
     const numSizes = activeColor.tailles.length;
     if (numSizes === 0) {
-      alert("Veuillez d'abord ajouter ou générer des tailles !");
+      triggerToast("Veuillez d'abord ajouter ou générer des tailles !", 'error');
       return;
     }
 
     const totalQty = parseInt(repartTotalQty, 10);
     if (isNaN(totalQty) || totalQty <= 0) {
-      alert("Veuillez entrer une quantité totale de pièces valide.");
+      triggerToast("Veuillez entrer une quantité totale de pièces valide.", 'error');
       return;
     }
 
@@ -1040,7 +1040,7 @@ export default function App() {
     } else if (repartMode === 'ratio') {
       const parts = repartRatioPattern.split(/[:\-\s]+/).map(p => parseInt(p, 10)).filter(num => !isNaN(num) && num > 0);
       if (parts.length === 0) {
-        alert("Modèle de ratio invalide (ex: 1:2:2:2:1 ou 1-1-1).");
+        triggerToast("Modèle de ratio invalide (ex: 1:2:2:2:1 ou 1-1-1).", 'error');
         return;
       }
       
@@ -1382,7 +1382,7 @@ export default function App() {
 
     // Look for duplicates in other headings
     if (currentTab.tailles.includes(cleanVal)) {
-      alert(`La taille "${cleanVal}" existe déjà pour cette couleur.`);
+      triggerToast(`La taille "${cleanVal}" existe déjà pour cette couleur.`, 'error');
       return;
     }
 
@@ -1757,7 +1757,7 @@ export default function App() {
 
       await exportToExcel(resultsToExport, meta, sizesInputsMapping, printColumns);
     } catch (err: any) {
-      alert(`Erreur d'exportation Excel: ${err.message}`);
+      triggerToast(`Erreur d'exportation Excel: ${err.message}`, 'error');
     }
   };
 
@@ -2314,6 +2314,57 @@ export default function App() {
         /* Indicator bars (e.g. w-2.5 h-5 rounded-md) */
         html:not(.dark) .rounded-md.bg-gradient-to-b {
           background: var(--primary-accent) !important;
+        }
+
+        /* Override primary brand color in light mode to match dynamic accent */
+        html:not(.dark) .bg-\[\#ff5000\] {
+          background-color: var(--primary-accent) !important;
+        }
+        html:not(.dark) .text-\[\#ff5000\] {
+          color: var(--primary-accent) !important;
+        }
+        html:not(.dark) .border-\[\#ff5000\] {
+          border-color: var(--primary-accent) !important;
+        }
+        html:not(.dark) .bg-\[\#ff5000\]\\/5 {
+          background-color: var(--primary-accent)0d !important;
+        }
+        html:not(.dark) .bg-\[\#ff5000\]\\/10 {
+          background-color: var(--primary-accent)1a !important;
+        }
+        html:not(.dark) .border-\[\#ff5000\]\\/20 {
+          border-color: var(--primary-accent)33 !important;
+        }
+        html:not(.dark) .border-\[\#ff5000\]\\/30 {
+          border-color: var(--primary-accent)4d !important;
+        }
+        html:not(.dark) .hover\\:bg-\[\#ff5000\]:hover {
+          background-color: var(--primary-accent) !important;
+        }
+        html:not(.dark) .hover\\:bg-\[\#ff5000\]\\/90:hover {
+          background-color: var(--primary-accent)e6 !important;
+        }
+
+        /* Custom dynamic scrollbars */
+        ::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: var(--primary-accent)33;
+          border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: var(--primary-accent)66;
+        }
+
+        /* Custom Selection Color */
+        ::selection {
+          background-color: var(--primary-accent)33;
+          color: inherit;
         }
 
         /* Override general body text color for theme customize view */

@@ -2,6 +2,256 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Lock, Cpu, Server, ShieldCheck, Terminal } from 'lucide-react';
 
+const PlaneSVG = () => (
+  <svg viewBox="0 0 64 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-14 h-6 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]">
+    <path d="M10 12 L20 10 L45 10 L55 12 L45 14 L20 14 Z" fill="currentColor" opacity="0.9" />
+    <path d="M30 11 L24 2 L28 2 L36 11 Z" fill="currentColor" />
+    <path d="M30 13 L24 22 L28 22 L36 13 Z" fill="currentColor" />
+    <path d="M48 11 L52 5 L55 5 L53 11 Z" fill="currentColor" />
+    <circle cx="28" cy="12" r="1" fill="#fff" />
+    <circle cx="32" cy="12" r="1" fill="#fff" />
+    <circle cx="36" cy="12" r="1" fill="#fff" />
+  </svg>
+);
+
+const TrainSVG = () => (
+  <div className="flex items-end gap-1">
+    <div className="w-10 h-5 bg-orange-500 rounded-t-md rounded-l-lg relative border border-orange-400/50 flex items-center justify-end px-1 shadow-[0_0_8px_rgba(249,115,22,0.3)]">
+      <div className="w-1.5 h-1.5 bg-orange-200 rounded-full animate-pulse mr-1" />
+      <div className="absolute -top-1 left-3 w-1.5 h-1.5 bg-neutral-600 rounded-t-sm" />
+    </div>
+    <div className="w-8 h-4 bg-indigo-500 rounded-sm border border-indigo-400/40" />
+    <div className="w-8 h-4 bg-emerald-500 rounded-sm border border-emerald-400/40" />
+  </div>
+);
+
+const TruckSVG = () => (
+  <div className="relative">
+    <div className="flex items-end">
+      <div className="w-4 h-5 bg-neutral-300 rounded-t-md border-r-0 border border-neutral-400/30 flex items-center p-0.5">
+        <div className="w-2 h-2 bg-neutral-900 rounded-sm" />
+      </div>
+      <div className="w-11 h-6 bg-cyan-500 rounded-sm border border-cyan-400/40 flex items-center justify-center text-[7px] font-bold text-cyan-100 shadow-[0_0_8px_rgba(6,182,212,0.3)]">
+        CD
+      </div>
+    </div>
+    <div className="absolute bottom-[-3px] left-1 flex gap-5">
+      <motion.div 
+        animate={{ rotate: 360 }}
+        transition={{ repeat: Infinity, duration: 0.6, ease: "linear" }}
+        className="w-2 h-2 bg-neutral-900 border border-white/20 rounded-full flex items-center justify-center text-[4px]"
+      />
+      <motion.div 
+        animate={{ rotate: 360 }}
+        transition={{ repeat: Infinity, duration: 0.6, ease: "linear" }}
+        className="w-2 h-2 bg-neutral-900 border border-white/20 rounded-full flex items-center justify-center text-[4px]"
+      />
+    </div>
+  </div>
+);
+
+const CargoShipSVG = () => (
+  <svg viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-28 h-10 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]">
+    <path d="M10 25 L105 25 L115 15 L25 15 Z" fill="currentColor" opacity="0.85" />
+    <path d="M25 15 L105 15 L108 5 L102 5 L101 10 L80 10 L80 15 Z" fill="currentColor" opacity="0.7" />
+    <rect x="30" y="5" width="12" height="10" fill="#f43f5e" stroke="#fda4af" strokeWidth="0.5" rx="1" />
+    <rect x="44" y="5" width="12" height="10" fill="#3b82f6" stroke="#93c5fd" strokeWidth="0.5" rx="1" />
+    <rect x="58" y="5" width="12" height="10" fill="#eab308" stroke="#fef08a" strokeWidth="0.5" rx="1" />
+    <rect x="37" y="-5" width="12" height="10" fill="#10b981" stroke="#6ee7b7" strokeWidth="0.5" rx="1" />
+    <rect x="51" y="-5" width="12" height="10" fill="#a855f7" stroke="#d8b4fe" strokeWidth="0.5" rx="1" />
+  </svg>
+);
+
+const CartonBoxSVG = () => (
+  <svg viewBox="0 0 24 24" className="w-5 h-5 text-amber-500 drop-shadow-[0_0_4px_rgba(245,158,11,0.5)]">
+    <path d="M2 17 L10 21 L10 11 L2 7 Z" fill="currentColor" opacity="0.8" />
+    <path d="M10 21 L18 17 L18 7 L10 11 Z" fill="currentColor" opacity="0.9" />
+    <path d="M2 7 L10 11 L18 7 L10 3 Z" fill="currentColor" />
+    <path d="M10 3 L10 11" stroke="#3730a3" strokeWidth="0.5" opacity="0.4" />
+  </svg>
+);
+
+const WaveSVG = ({ className, delay = 0 }: { className?: string; delay?: number }) => (
+  <motion.svg
+    viewBox="0 0 1200 120"
+    className={`absolute bottom-0 left-0 w-full h-12 fill-current ${className}`}
+    preserveAspectRatio="none"
+    animate={{
+      x: [0, -100, 0],
+      y: [0, 4, -4, 0]
+    }}
+    transition={{
+      repeat: Infinity,
+      duration: 8,
+      delay,
+      ease: "easeInOut"
+    }}
+  >
+    <path d="M0,60 C150,90 350,30 500,60 C650,90 850,30 1000,60 C1150,90 1300,30 1450,60 L1450,120 L0,120 Z" />
+  </motion.svg>
+);
+
+function LogisticsVisualizer() {
+  return (
+    <div className="relative w-full h-72 rounded-2xl border border-white/5 bg-[#101014]/60 backdrop-blur-md overflow-hidden p-4 flex flex-col justify-between mt-8 z-10">
+      <div className="flex justify-between items-center border-b border-white/5 pb-2 text-mono-tech text-[9px] tracking-wider text-white/40">
+        <span className="flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+          SIMULATION ACTIVE: LOGISTIQUE MULTI-MODALE
+        </span>
+        <span>CDISCOUNT INGRESS PIPELINE</span>
+      </div>
+
+      <div className="flex-1 relative min-h-0 select-none overflow-hidden flex flex-col justify-between py-1">
+        
+        {/* SKY TRACK (AVION) */}
+        <div className="relative h-10 w-full border-b border-white/[0.02]">
+          <motion.div
+            initial={{ x: "120%" }}
+            animate={{ x: "-40%" }}
+            transition={{ repeat: Infinity, duration: 25, ease: "linear" }}
+            className="absolute top-1 opacity-20 text-white"
+          >
+            <svg className="w-8 h-4 fill-current" viewBox="0 0 24 12">
+              <path d="M6 10a4 4 0 0 1-1-7.8 4.5 4.5 0 0 1 8.5-1 3 3 0 0 1 5.2 2.8 4 4 0 0 1-1 6H6z" />
+            </svg>
+          </motion.div>
+
+          <motion.div
+            initial={{ x: "150%" }}
+            animate={{ x: "-30%" }}
+            transition={{ repeat: Infinity, duration: 18, ease: "linear" }}
+            className="absolute top-4 opacity-15 text-white"
+          >
+            <svg className="w-6 h-3 fill-current" viewBox="0 0 24 12">
+              <path d="M6 10a4 4 0 0 1-1-7.8 4.5 4.5 0 0 1 8.5-1 3 3 0 0 1 5.2 2.8 4 4 0 0 1-1 6H6z" />
+            </svg>
+          </motion.div>
+
+          <div className="absolute top-5 left-0 w-full h-px bg-indigo-500/10 border-dashed border-b border-indigo-500/5" />
+
+          <motion.div
+            initial={{ x: "-100px", y: 4 }}
+            animate={{
+              x: ["-100px", "600px"],
+              y: [2, 6, 2, 4, 2]
+            }}
+            transition={{
+              x: { repeat: Infinity, duration: 12, ease: "linear" },
+              y: { repeat: Infinity, duration: 4, ease: "easeInOut" }
+            }}
+            className="absolute left-0"
+          >
+            <PlaneSVG />
+          </motion.div>
+        </div>
+
+        {/* RAIL TRACK (VOIE FERRÉE) */}
+        <div className="relative h-10 w-full flex items-center">
+          <div className="absolute bottom-1.5 left-0 w-full h-[3px] bg-neutral-800 flex justify-between overflow-hidden opacity-30">
+            {Array.from({ length: 40 }).map((_, i) => (
+              <div key={i} className="w-[2px] h-full bg-white/40" />
+            ))}
+          </div>
+
+          <motion.div
+            initial={{ x: "500px" }}
+            animate={{ x: "-200px" }}
+            transition={{ repeat: Infinity, duration: 9, ease: "linear" }}
+            className="absolute bottom-1"
+          >
+            <TrainSVG />
+          </motion.div>
+        </div>
+
+        {/* ROAD TRACK (VOITURE / CAMION) */}
+        <div className="relative h-10 w-full flex items-center">
+          <div className="absolute bottom-1 left-0 w-full h-1 bg-neutral-800/40" />
+          <div className="absolute bottom-1.5 left-0 w-full h-[1px] border-dashed border-b border-neutral-600/30" />
+
+          <motion.div
+            initial={{ x: "-150px" }}
+            animate={{ 
+              x: ["-150px", "550px"],
+              y: [0, -1, 0, -0.5, 0]
+            }}
+            transition={{ 
+              x: { repeat: Infinity, duration: 10, ease: "linear" },
+              y: { repeat: Infinity, duration: 0.4, ease: "easeInOut" }
+            }}
+            className="absolute bottom-1"
+          >
+            <TruckSVG />
+          </motion.div>
+        </div>
+
+        {/* SEA & CONVEYOR TRACK (EAU & BATEAU & CARTON) */}
+        <div className="relative h-16 w-full mt-2 bg-cyan-950/10 rounded-b-lg border-t border-cyan-500/5">
+          <WaveSVG className="text-cyan-900/20 h-10" delay={4} />
+
+          <motion.div
+            initial={{ x: "60%" }}
+            animate={{
+              x: ["60%", "20%", "60%"],
+              y: [4, 8, 4],
+              rotate: [-2, 2, -2]
+            }}
+            transition={{
+              x: { repeat: Infinity, duration: 22, ease: "easeInOut" },
+              y: { repeat: Infinity, duration: 6, ease: "easeInOut" },
+              rotate: { repeat: Infinity, duration: 5, ease: "easeInOut" }
+            }}
+            className="absolute bottom-1 z-10"
+          >
+            <CargoShipSVG />
+          </motion.div>
+
+          <WaveSVG className="text-cyan-500/10 h-8" delay={0} />
+
+          <div className="absolute bottom-2 left-2 w-28 h-4 bg-neutral-800/80 rounded-t-sm border border-neutral-700/60 z-20 flex items-center px-1">
+            <div className="w-full h-1 bg-neutral-900/60 rounded-full overflow-hidden flex justify-between">
+              <div className="w-2 h-full bg-neutral-600 animate-pulse" />
+              <div className="w-2 h-full bg-neutral-600 animate-pulse" />
+              <div className="w-2 h-full bg-neutral-600 animate-pulse" />
+            </div>
+            
+            <motion.div
+              animate={{
+                x: [0, 60, 80, 85, 80],
+                y: [0, 0, -25, -2, 0],
+                rotate: [0, 0, 180, 360, 360],
+                scaleX: [1, 1, 0.9, 1.1, 1],
+                scaleY: [1, 1, 1.2, 0.8, 1],
+                opacity: [0, 1, 1, 1, 0]
+              }}
+              transition={{
+                repeat: Infinity,
+                duration: 3,
+                times: [0, 0.4, 0.65, 0.85, 1],
+                ease: "easeInOut"
+              }}
+              className="absolute left-1 bottom-4"
+            >
+              <CartonBoxSVG />
+            </motion.div>
+          </div>
+          
+          <div className="absolute bottom-2 left-32 text-[7px] font-mono text-white/30 z-20">
+            DOCK LOADING AREA
+          </div>
+        </div>
+
+      </div>
+
+      <div className="flex justify-between items-center text-[8px] font-mono text-white/30 border-t border-white/5 pt-1.5">
+        <span>AERODROME TRK: 082°</span>
+        <span>TRAIN SPD: 82 KM/H</span>
+        <span>OCEAN STATE: CALM</span>
+      </div>
+    </div>
+  );
+}
+
 interface WelcomeScreenProps {
   onSuccess: () => void;
 }
@@ -58,11 +308,21 @@ export default function WelcomeScreen({ onSuccess }: WelcomeScreenProps) {
       <main className="flex-1 grid grid-cols-1 lg:grid-cols-2 items-stretch min-h-0">
         
         {/* HERO SECTION (LEFT) */}
-        <section className="relative flex flex-col justify-center p-8 sm:p-16 lg:p-24 border-r-0 lg:border-r border-white/10 overflow-hidden">
+        <section className="relative flex flex-col justify-between p-8 sm:p-12 lg:p-16 border-r-0 lg:border-r border-white/10 overflow-hidden bg-[#0A0A0C]">
           {/* Subtle Grid overlay */}
-          <div className="absolute inset-0 tech-grid opacity-60 pointer-events-none" />
+          <div className="absolute inset-0 tech-grid opacity-40 pointer-events-none" />
           
-          <div className="relative z-10 space-y-4">
+          <div className="relative z-10 space-y-4 pt-4">
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              className="flex items-center gap-2 text-mono-tech text-[10px] tracking-[0.2em] text-cyan-400"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              <span>LOGISTIQUE EN TEMPS RÉEL</span>
+            </motion.div>
+
             <motion.h1 
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -79,6 +339,9 @@ export default function WelcomeScreen({ onSuccess }: WelcomeScreenProps) {
               className="w-24 h-px bg-white"
             />
           </div>
+
+          {/* Realtime Animated Logistics Environment */}
+          <LogisticsVisualizer />
         </section>
 
         {/* LOGIN SECTION (RIGHT) */}
