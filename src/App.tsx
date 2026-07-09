@@ -67,7 +67,8 @@ import {
   BG_COLORS_DARK,
   BG_COLORS_LIGHT,
   getRemainderRowColor,
-  isRemainderRow
+  isRemainderRow,
+  getContrastColor
 } from './utils';
 
 // Default template structures
@@ -90,6 +91,93 @@ const DEFAULT_DATABASE: ModelsDatabase = {
 
 const DEFAULT_SIZES = ['XS', 'S', 'M', 'L', 'XL'];
 
+const THEME_PRESETS = [
+  {
+    name: 'Défaut High-Contrast Slate',
+    primaryAccent: '#4f8ef7',
+    headerBg: '#0F0F12',
+    headerText: '#FFFFFF',
+    tableHeaderBg: '#1E293B',
+    tableHeaderTextColor: '#FFFFFF',
+    textColor: '#F1F5F9',
+    cardBg: '#1A1D27',
+    sidebarBg: '#0F0F12',
+    sidebarText: '#E2E8F0',
+  },
+  {
+    name: 'Amazon Merchant Pro',
+    primaryAccent: '#FF9900',
+    headerBg: '#232F3E',
+    headerText: '#FFFFFF',
+    tableHeaderBg: '#141B24',
+    tableHeaderTextColor: '#FF9900',
+    textColor: '#F5F5F5',
+    cardBg: '#1D2530',
+    sidebarBg: '#232F3E',
+    sidebarText: '#EAEDED',
+  },
+  {
+    name: 'Alibaba Business (Red Fire)',
+    primaryAccent: '#FF5000',
+    headerBg: '#1F110B',
+    headerText: '#FF5000',
+    tableHeaderBg: '#2E1810',
+    tableHeaderTextColor: '#FFFFFF',
+    textColor: '#F9FAFB',
+    cardBg: '#1E120F',
+    sidebarBg: '#1F110B',
+    sidebarText: '#FFD2BD',
+  },
+  {
+    name: 'Deep Ocean Teal',
+    primaryAccent: '#06B6D4',
+    headerBg: '#083344',
+    headerText: '#ECFEFF',
+    tableHeaderBg: '#155E75',
+    tableHeaderTextColor: '#FFFFFF',
+    textColor: '#F0FDFA',
+    cardBg: '#0F172A',
+    sidebarBg: '#083344',
+    sidebarText: '#CCFBF1',
+  },
+  {
+    name: 'Forest Eco Green',
+    primaryAccent: '#10B981',
+    headerBg: '#064E3B',
+    headerText: '#D1FAE5',
+    tableHeaderBg: '#065F46',
+    tableHeaderTextColor: '#FFFFFF',
+    textColor: '#F0FDF4',
+    cardBg: '#111827',
+    sidebarBg: '#064E3B',
+    sidebarText: '#A7F3D0',
+  },
+  {
+    name: 'Cyberpunk Neon Pink',
+    primaryAccent: '#EC4899',
+    headerBg: '#1E1B4B',
+    headerText: '#F472B6',
+    tableHeaderBg: '#312E81',
+    tableHeaderTextColor: '#EC4899',
+    textColor: '#FDF2F8',
+    cardBg: '#0F0B1E',
+    sidebarBg: '#1E1B4B',
+    sidebarText: '#FBCFE8',
+  },
+  {
+    name: 'Nordic Light Snow',
+    primaryAccent: '#3B82F6',
+    headerBg: '#F3F4F6',
+    headerText: '#1F2937',
+    tableHeaderBg: '#E5E7EB',
+    tableHeaderTextColor: '#111827',
+    textColor: '#1F2937',
+    cardBg: '#FFFFFF',
+    sidebarBg: '#F3F4F6',
+    sidebarText: '#374151',
+  }
+];
+
 const CUSTS = [
   '6TH SENS', 'AGOA CTN', 'ANTHROPOLOGIE', 'ARMANI', 'AUSTIN REED', 'AWAY', 'BARBOUR', 'BONOBO', 'BRENTWOOD GENTS',
   'BREUNINGER', 'BROOKS', 'CAPE UNION', 'CHARLES TYRWITT', 'CONBIPEL', 'COUNTRY ROAD&TRENERY GENTS', 'DANIEL HECHTER',
@@ -107,7 +195,7 @@ const CUSTS = [
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [darkMode, setDarkMode] = useState<boolean>(true);
+  const [darkMode, setDarkMode] = useState<boolean>(false);
 
   // Database templates state (persisted via local storage)
   const [db, setDb] = useState<ModelsDatabase>(() => {
@@ -169,6 +257,34 @@ export default function App() {
   const [activeColorIdx, setActiveColorIdx] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  // Custom Theme Customization state
+  const [customTheme, setCustomTheme] = useState(() => {
+    const saved = localStorage.getItem('packing_list_pro_custom_theme');
+    return saved ? JSON.parse(saved) : {
+      primaryAccent: '#06B6D4',
+      headerBg: '#083344',
+      headerText: '#ECFEFF',
+      tableHeaderBg: '#155E75',
+      tableHeaderTextColor: '#FFFFFF',
+      textColor: '#F0FDFA',
+      cardBg: '#0F172A',
+      sidebarBg: '#083344',
+      sidebarText: '#CCFBF1',
+    };
+  });
+
+  useEffect(() => {
+    localStorage.setItem('packing_list_pro_custom_theme', JSON.stringify(customTheme));
+  }, [customTheme]);
+
+  // Staged Theme state for color edits and presets before clicking save
+  const [stagedTheme, setStagedTheme] = useState(() => customTheme);
+
+  // Keep stagedTheme in sync if customTheme is loaded or modified from elsewhere (like on mount/reset/preset)
+  useEffect(() => {
+    setStagedTheme(customTheme);
+  }, [customTheme]);
+
   // Saved snapshots lists history database
   const [savedLists, setSavedLists] = useState<LocalSaveListItem[]>(() => {
     const saved = localStorage.getItem('packing_list_pro_saved_lists');
@@ -209,15 +325,15 @@ export default function App() {
   const [isColorInputExpanded, setIsColorInputExpanded] = useState<boolean>(true);
 
   // Active Input Section Tab (separates metadata, strategy, and color sheet editing)
-  const [activeInputTab, setActiveInputTab] = useState<'meta' | 'strategy' | 'colors' | 'packing_list' | 'breakdown' | 'summary' | 'saves' | 'labels'>('colors');
+  const [activeInputTab, setActiveInputTab] = useState<'meta' | 'strategy' | 'colors' | 'packing_list' | 'breakdown' | 'summary' | 'saves' | 'labels' | 'theme'>('colors');
 
   // Active page state for sidebar: 'saisie' (page 1: Saisie & Préparation) or 'suivi' (page 2: Suivi & Livrables)
   const [sidebarActivePage, setSidebarActivePage] = useState<'saisie' | 'suivi'>('saisie');
 
   // Controlled wrapper to set active inputs and automatically update the sidebar page grouping
-  const handleSetActiveInputTab = (tab: 'meta' | 'strategy' | 'colors' | 'packing_list' | 'breakdown' | 'summary' | 'saves' | 'labels') => {
+  const handleSetActiveInputTab = (tab: 'meta' | 'strategy' | 'colors' | 'packing_list' | 'breakdown' | 'summary' | 'saves' | 'labels' | 'theme') => {
     setActiveInputTab(tab);
-    if (['meta', 'strategy', 'colors'].includes(tab)) {
+    if (['meta', 'strategy', 'colors', 'theme'].includes(tab)) {
       setSidebarActivePage('saisie');
     } else {
       setSidebarActivePage('suivi');
@@ -1983,6 +2099,43 @@ export default function App() {
     return isActive ? 'translate-x-[2px] text-blue-800' : 'text-blue-300';
   };
 
+  const getSidebarItemInlineStyle = (tabName: string) => {
+    if (darkMode) return undefined;
+    const isActive = activeInputTab === tabName;
+    return {
+      backgroundColor: isActive ? customTheme.primaryAccent : 'transparent',
+      borderColor: isActive ? customTheme.primaryAccent : 'transparent',
+      color: isActive ? customTheme.headerText : customTheme.sidebarText,
+    };
+  };
+
+  const getSidebarItemIconInlineStyle = (tabName: string) => {
+    if (darkMode) return undefined;
+    const isActive = activeInputTab === tabName;
+    return {
+      backgroundColor: isActive ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+      color: isActive ? customTheme.headerText : customTheme.sidebarText,
+    };
+  };
+
+  const getSidebarItemSubtextInlineStyle = (tabName: string) => {
+    if (darkMode) return undefined;
+    const isActive = activeInputTab === tabName;
+    return {
+      color: isActive ? customTheme.headerText : customTheme.sidebarText,
+      opacity: isActive ? 0.8 : 0.6,
+    };
+  };
+
+  const getSidebarHighlightInlineStyle = (tabName: string) => {
+    if (darkMode) return undefined;
+    const isActive = activeInputTab === tabName;
+    return {
+      backgroundColor: customTheme.headerText,
+      transform: isActive ? 'scaleY(1)' : 'scaleY(0)',
+    };
+  };
+
   const getInputStyles = (isAccent?: boolean) => {
     if (darkMode) {
       if (isAccent) {
@@ -2020,6 +2173,179 @@ export default function App() {
   return (
     <div className={`min-h-screen font-sans bg-grid-pattern ${darkMode ? 'bg-[#0C0C0E] text-white' : 'bg-[#f4f6fb] text-slate-900'} transition-colors duration-300 pb-12`}>
       
+      {/* Custom Dynamic Theme CSS Overrides */}
+      <style>{`
+        :root {
+          --primary-accent: ${customTheme.primaryAccent};
+          --header-bg: ${customTheme.headerBg};
+          --header-text: ${customTheme.headerText};
+          --table-header-bg: ${customTheme.tableHeaderBg};
+          --table-header-text: ${customTheme.tableHeaderTextColor};
+          --body-text: ${customTheme.textColor};
+          --card-bg: ${customTheme.cardBg};
+          --sidebar-bg: ${customTheme.sidebarBg};
+          --sidebar-text: ${customTheme.sidebarText};
+        }
+
+        /* Override slate color system when custom theme is active and not in dark mode */
+        html:not(.dark) {
+          --slate-100: ${customTheme.textColor};
+          --slate-200: ${customTheme.textColor};
+          --slate-300: ${customTheme.textColor};
+          --slate-350: ${customTheme.primaryAccent}40;
+          --slate-400: ${customTheme.textColor}b3;
+          --slate-450: ${customTheme.textColor}99;
+          --slate-500: ${customTheme.textColor};
+          --slate-600: ${customTheme.textColor};
+          --slate-705: ${customTheme.textColor};
+          --slate-205: ${customTheme.primaryAccent}20;
+        }
+
+        /* Override general body background and text colors in light mode */
+        html:not(.dark) body, html:not(.dark) .min-h-screen {
+          background-color: var(--card-bg) !important;
+          color: var(--body-text) !important;
+        }
+
+        /* Override general text color classes in light mode to guarantee high contrast */
+        html:not(.dark) .text-slate-950,
+        html:not(.dark) .text-slate-900, 
+        html:not(.dark) .text-slate-800, 
+        html:not(.dark) .text-slate-700, 
+        html:not(.dark) .text-slate-650,
+        html:not(.dark) .text-slate-755,
+        html:not(.dark) .text-slate-855,
+        html:not(.dark) .text-slate-600,
+        html:not(.dark) .text-slate-500,
+        html:not(.dark) .text-slate-450,
+        html:not(.dark) .text-[#0d0b0b],
+        html:not(.dark) .text-black,
+        html:not(.dark) .text-blue-950,
+        html:not(.dark) .text-blue-100 {
+          color: var(--body-text) !important;
+        }
+
+        html:not(.dark) .text-slate-400 {
+          color: var(--body-text) !important;
+          opacity: 0.7 !important;
+        }
+
+        /* Override container cards background and borders in light mode */
+        html:not(.dark) .rounded-2xl.border, 
+        html:not(.dark) .rounded-xl.border,
+        html:not(.dark) .rounded-lg.border {
+          background-color: var(--card-bg) !important;
+          border-color: var(--primary-accent)25 !important;
+        }
+
+        /* Override general white backgrounds to dynamically match the selected cardBg */
+        html:not(.dark) .bg-white,
+        html:not(.dark) .\\!bg-white,
+        html:not(.dark) tr.bg-white,
+        html:not(.dark) div.bg-white,
+        html:not(.dark) td.bg-white {
+          background-color: var(--card-bg) !important;
+        }
+
+        /* Override nested light panels & colored backgrounds in light mode to prevent solid white blocks */
+        html:not(.dark) .bg-slate-50,
+        html:not(.dark) .bg-slate-100,
+        html:not(.dark) .bg-slate-200,
+        html:not(.dark) .bg-slate-50\\/50,
+        html:not(.dark) .bg-[#f4f6fb]\\/50,
+        html:not(.dark) .bg-[#f4f6fb],
+        html:not(.dark) .bg-[#fbf5f5],
+        html:not(.dark) .bg-[#f8fafc],
+        html:not(.dark) .bg-[#f0f4f8],
+        html:not(.dark) .bg-[#fcfdfe],
+        html:not(.dark) .bg-[#f4f7fc],
+        html:not(.dark) .bg-[#f8f9fa],
+        html:not(.dark) .bg-slate-100\\/30,
+        html:not(.dark) .bg-slate-100\\/40,
+        html:not(.dark) .bg-slate-100\\/50,
+        html:not(.dark) .bg-slate-100\\/60,
+        html:not(.dark) .bg-slate-200\\/10,
+        html:not(.dark) .bg-slate-200\\/50,
+        html:not(.dark) .bg-[#ff5000]\\/5 {
+          background-color: var(--card-bg) !important;
+          background-image: linear-gradient(rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04)) !important;
+          border-color: var(--primary-accent)20 !important;
+        }
+
+        /* Hover states in light mode */
+        html:not(.dark) .hover\\:bg-slate-50:hover,
+        html:not(.dark) .hover\\:bg-slate-100:hover,
+        html:not(.dark) .hover\\:bg-slate-100\\/40:hover,
+        html:not(.dark) .hover\\:bg-white\\/5:hover {
+          background-color: var(--card-bg) !important;
+          background-image: linear-gradient(rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08)) !important;
+        }
+
+        /* Override inputs, select and textarea in light mode */
+        html:not(.dark) input,
+        html:not(.dark) select,
+        html:not(.dark) textarea {
+          background-color: ${customTheme.cardBg === '#FFFFFF' ? '#FFFFFF' : 'rgba(255, 255, 255, 0.05)'} !important;
+          color: var(--body-text) !important;
+          border-color: var(--primary-accent)30 !important;
+        }
+        html:not(.dark) input:focus,
+        html:not(.dark) select:focus,
+        html:not(.dark) textarea:focus {
+          border-color: var(--primary-accent) !important;
+          box-shadow: 0 0 0 1px var(--primary-accent)20 !important;
+        }
+
+        /* Overrides for table headers inside standard elements */
+        html:not(.dark) table thead tr,
+        html:not(.dark) table thead th,
+        html:not(.dark) table thead td {
+          background-color: var(--table-header-bg) !important;
+          color: var(--table-header-text) !important;
+          border-color: var(--primary-accent)20 !important;
+        }
+
+        /* Table borders and padding */
+        html:not(.dark) table td, html:not(.dark) table th {
+          border-color: var(--primary-accent)15 !important;
+          color: var(--body-text) !important;
+        }
+
+        /* Indicator bars (e.g. w-2.5 h-5 rounded-md) */
+        html:not(.dark) .rounded-md.bg-gradient-to-b {
+          background: var(--primary-accent) !important;
+        }
+
+        /* Override general body text color for theme customize view */
+        .theme-customized-text {
+          color: var(--body-text) !important;
+        }
+
+        /* Override headers & section headers */
+        .theme-section-header {
+          background-color: var(--header-bg) !important;
+          color: var(--header-text) !important;
+        }
+
+        /* Override table header backgrounds */
+        .theme-table-header {
+          background-color: var(--table-header-bg) !important;
+          color: var(--table-header-text) !important;
+        }
+
+        /* Accent overrides */
+        .theme-accent-bg {
+          background-color: var(--primary-accent) !important;
+          color: var(--header-text) !important;
+        }
+        .theme-accent-text {
+          color: var(--primary-accent) !important;
+        }
+        .theme-accent-border {
+          border-color: var(--primary-accent) !important;
+        }
+      `}</style>
+
       {/* Dynamic Modal components */}
       {boxModalCtx?.isOpen && (
         <BoxModal
@@ -2620,7 +2946,8 @@ export default function App() {
                 activeInputTab === 'packing_list' ? '📦 PACKING LIST' : 
                 activeInputTab === 'breakdown' ? '📊 BREAKDOWN' : 
                 activeInputTab === 'summary' ? '📈 RECAPITULATIF' : 
-                activeInputTab === 'saves' ? '💾 SAUVEGARDES' : '🏷️ ÉTIQUETTES PARCELLES'
+                activeInputTab === 'saves' ? '💾 SAUVEGARDES' : 
+                activeInputTab === 'theme' ? '🎨 STYLE & COULEURS' : '🏷️ ÉTIQUETTES PARCELLES'
               }
             </span>
           </div>
@@ -2637,20 +2964,25 @@ export default function App() {
           
           {/* SIDEBAR NAVIGATION: PETITS RUBANS À GAUCHE */}
           <div 
+            id="sidebar-nav-container"
             className={`flex-shrink-0 transition-all duration-300 ease-in-out self-start lg:self-stretch z-30 
               ${isSidebarCollapsed ? 'hidden lg:flex lg:w-20' : 'w-full lg:w-64 flex'} 
               flex-col gap-2.5 lg:h-full lg:overflow-y-auto overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 scrollbar-none border rounded-2xl p-3 shadow-lg text-white
               ${darkMode ? 'bg-[#0F0F12] border-white/10' : 'bg-[#0b5870] border-[#f5f0f0]'}
             `}
+            style={darkMode ? undefined : { backgroundColor: customTheme.sidebarBg, color: customTheme.sidebarText, borderColor: customTheme.primaryAccent + '30' }}
           >
             {/* COLLAPSE/EXPAND TOGGLE HEADER - DESKTOP ONLY */}
             <div className={`hidden lg:flex items-center justify-between border-b pb-2 ${
               darkMode ? 'border-white/10' : 'border-blue-400/30'
             } ${isSidebarCollapsed ? 'justify-center border-none pb-0' : 'px-1 mb-1'}`}>
               {!isSidebarCollapsed && (
-                <span className={`text-[10px] font-mono tracking-wider font-extrabold uppercase ${
-                  darkMode ? 'text-white/60' : 'text-blue-100'
-                }`}>
+                <span 
+                  className={`text-[10px] font-mono tracking-wider font-extrabold uppercase ${
+                    darkMode ? 'text-white/60' : 'text-blue-100'
+                  }`}
+                  style={darkMode ? undefined : { color: customTheme.sidebarText, opacity: 0.7 }}
+                >
                   🧭 Navigation
                 </span>
               )}
@@ -2661,6 +2993,7 @@ export default function App() {
                     ? 'border-white/10 bg-white/5 text-white hover:bg-white/10 hover:scale-[1.05] active:scale-[0.95]' 
                     : 'border-blue-400/50 bg-blue-700/40 text-blue-100 hover:text-white hover:bg-blue-50 hover:scale-[1.05] active:scale-[0.95]'
                 }`}
+                style={darkMode ? undefined : { borderColor: customTheme.primaryAccent + '40', backgroundColor: 'rgba(255, 255, 255, 0.05)', color: customTheme.sidebarText }}
                 title={isSidebarCollapsed ? "Déployer le panneau" : "Réduire le panneau"}
               >
                 {isSidebarCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
@@ -2670,9 +3003,12 @@ export default function App() {
             {/* SECTION 1: SAISIE (REFERENCE / STRATEGY / COLISAGE) */}
             <div className={`flex flex-col gap-1.5 ${isSidebarCollapsed ? 'items-center' : 'w-full'}`}>
               {!isSidebarCollapsed && (
-                <div className={`px-1 text-[9px] font-mono tracking-wider font-extrabold uppercase mb-1 transition-colors select-none ${
-                  darkMode ? 'text-white/40' : 'text-blue-200/90'
-                }`}>
+                <div 
+                  className={`px-1 text-[9px] font-mono tracking-wider font-extrabold uppercase mb-1 transition-colors select-none ${
+                    darkMode ? 'text-white/40' : 'text-blue-200/90'
+                  }`}
+                  style={darkMode ? undefined : { color: customTheme.sidebarText, opacity: 0.5 }}
+                >
                   ✍️ SAISIE
                 </div>
               )}
@@ -2686,12 +3022,17 @@ export default function App() {
                       ? 'lg:w-12 lg:h-12 lg:justify-center p-0 lg:p-2' 
                       : 'p-2.5 text-left w-full'
                   } ${getSidebarItemStyles('meta')}`}
+                  style={getSidebarItemInlineStyle('meta')}
                   title="📋 RÉFÉRENCES : Coordonnées Commande"
                 >
                   <div
                     className={`absolute left-0 top-0 bottom-0 w-1 transition-transform duration-300 ${getSidebarItemHighlightStyles('meta')}`}
+                    style={getSidebarHighlightInlineStyle('meta')}
                   />
-                  <div className={`p-1.5 rounded-lg flex-shrink-0 ${getSidebarItemIconStyles('meta')} transition-colors ${isSidebarCollapsed ? 'ml-0' : 'ml-0.5'}`}>
+                  <div 
+                    className={`p-1.5 rounded-lg flex-shrink-0 ${getSidebarItemIconStyles('meta')} transition-colors ${isSidebarCollapsed ? 'ml-0' : 'ml-0.5'}`}
+                    style={getSidebarItemIconInlineStyle('meta')}
+                  >
                     <FileText className="w-3.5 h-3.5" />
                   </div>
                   {!isSidebarCollapsed && (
@@ -2699,13 +3040,19 @@ export default function App() {
                       <div className="text-[10px] font-mono tracking-wider font-extrabold uppercase truncate">
                         📋 RÉFÉRENCES
                       </div>
-                      <div className={`text-[9px] hidden lg:block mt-0.5 font-sans truncate ${getSidebarItemSubtextStyles('meta')}`}>
+                      <div 
+                        className={`text-[9px] hidden lg:block mt-0.5 font-sans truncate ${getSidebarItemSubtextStyles('meta')}`}
+                        style={getSidebarItemSubtextInlineStyle('meta')}
+                      >
                         Commande & Clients
                       </div>
                     </div>
                   )}
                   {!isSidebarCollapsed && (
-                    <ChevronRight className={`w-3 h-3 ml-auto hidden lg:block transition-all duration-200 ${getSidebarItemChevronStyles('meta')}`} />
+                    <ChevronRight 
+                      className={`w-3 h-3 ml-auto hidden lg:block transition-all duration-200 ${getSidebarItemChevronStyles('meta')}`}
+                      style={getSidebarItemSubtextInlineStyle('meta')}
+                    />
                   )}
                 </button>
 
@@ -2717,12 +3064,17 @@ export default function App() {
                       ? 'lg:w-12 lg:h-12 lg:justify-center p-0 lg:p-2' 
                       : 'p-2.5 text-left w-full'
                   } ${getSidebarItemStyles('strategy')}`}
+                  style={getSidebarItemInlineStyle('strategy')}
                   title="⚙️ STRATÉGIE : Normes d'Emballage"
                 >
                   <div
                     className={`absolute left-0 top-0 bottom-0 w-1 transition-transform duration-300 ${getSidebarItemHighlightStyles('strategy')}`}
+                    style={getSidebarHighlightInlineStyle('strategy')}
                   />
-                  <div className={`p-1.5 rounded-lg flex-shrink-0 ${getSidebarItemIconStyles('strategy')} transition-colors ${isSidebarCollapsed ? 'ml-0' : 'ml-0.5'}`}>
+                  <div 
+                    className={`p-1.5 rounded-lg flex-shrink-0 ${getSidebarItemIconStyles('strategy')} transition-colors ${isSidebarCollapsed ? 'ml-0' : 'ml-0.5'}`}
+                    style={getSidebarItemIconInlineStyle('strategy')}
+                  >
                     <Sliders className="w-3.5 h-3.5" />
                   </div>
                   {!isSidebarCollapsed && (
@@ -2730,13 +3082,19 @@ export default function App() {
                       <div className="text-[10px] font-mono tracking-wider font-extrabold uppercase truncate">
                         ⚙️ STRATÉGIE
                       </div>
-                      <div className={`text-[9px] hidden lg:block mt-0.5 font-sans truncate ${getSidebarItemSubtextStyles('strategy')}`}>
+                      <div 
+                        className={`text-[9px] hidden lg:block mt-0.5 font-sans truncate ${getSidebarItemSubtextStyles('strategy')}`}
+                        style={getSidebarItemSubtextInlineStyle('strategy')}
+                      >
                         Normes d'Emballage
                       </div>
                     </div>
                   )}
                   {!isSidebarCollapsed && (
-                    <ChevronRight className={`w-3 h-3 ml-auto hidden lg:block transition-all duration-200 ${getSidebarItemChevronStyles('strategy')}`} />
+                    <ChevronRight 
+                      className={`w-3 h-3 ml-auto hidden lg:block transition-all duration-200 ${getSidebarItemChevronStyles('strategy')}`}
+                      style={getSidebarItemSubtextInlineStyle('strategy')}
+                    />
                   )}
                 </button>
 
@@ -2748,12 +3106,17 @@ export default function App() {
                       ? 'lg:w-12 lg:h-12 lg:justify-center p-0 lg:p-2' 
                       : 'p-2.5 text-left w-full'
                   } ${getSidebarItemStyles('colors')}`}
+                  style={getSidebarItemInlineStyle('colors')}
                   title="⌨️ GRILLE SAISIE : Colisage par Couleur"
                 >
                   <div
                     className={`absolute left-0 top-0 bottom-0 w-1 transition-transform duration-300 ${getSidebarItemHighlightStyles('colors')}`}
+                    style={getSidebarHighlightInlineStyle('colors')}
                   />
-                  <div className={`p-1.5 rounded-lg flex-shrink-0 ${getSidebarItemIconStyles('colors')} transition-colors ${isSidebarCollapsed ? 'ml-0' : 'ml-0.5'}`}>
+                  <div 
+                    className={`p-1.5 rounded-lg flex-shrink-0 ${getSidebarItemIconStyles('colors')} transition-colors ${isSidebarCollapsed ? 'ml-0' : 'ml-0.5'}`}
+                    style={getSidebarItemIconInlineStyle('colors')}
+                  >
                     <Grid className="w-3.5 h-3.5" />
                   </div>
                   {!isSidebarCollapsed && (
@@ -2761,27 +3124,81 @@ export default function App() {
                       <div className="text-[10px] font-mono tracking-wider font-extrabold uppercase truncate">
                         ⌨️ GRILLE SAISIE
                       </div>
-                      <div className={`text-[9px] hidden lg:block mt-0.5 font-sans truncate ${getSidebarItemSubtextStyles('colors')}`}>
+                      <div 
+                        className={`text-[9px] hidden lg:block mt-0.5 font-sans truncate ${getSidebarItemSubtextStyles('colors')}`}
+                        style={getSidebarItemSubtextInlineStyle('colors')}
+                      >
                         Colisage par Couleur
                       </div>
                     </div>
                   )}
                   {!isSidebarCollapsed && (
-                    <ChevronRight className={`w-3 h-3 ml-auto hidden lg:block transition-all duration-200 ${getSidebarItemChevronStyles('colors')}`} />
+                    <ChevronRight 
+                      className={`w-3 h-3 ml-auto hidden lg:block transition-all duration-200 ${getSidebarItemChevronStyles('colors')}`}
+                      style={getSidebarItemSubtextInlineStyle('colors')}
+                    />
+                  )}
+                </button>
+
+                {/* RIBBON 9: PERSONNALISATION STYLE */}
+                <button
+                  onClick={() => handleSetActiveInputTab('theme')}
+                  className={`group flex items-center gap-3 transition-all border rounded-xl relative cursor-pointer hover:scale-[1.02] active:scale-[0.98] overflow-hidden ${
+                    isSidebarCollapsed 
+                      ? 'lg:w-12 lg:h-12 lg:justify-center p-0 lg:p-2' 
+                      : 'p-2.5 text-left w-full'
+                  } ${getSidebarItemStyles('theme')}`}
+                  style={getSidebarItemInlineStyle('theme')}
+                  title="🎨 PERSONNALISER LE DESIGN"
+                >
+                  <div
+                    className={`absolute left-0 top-0 bottom-0 w-1 transition-transform duration-300 ${getSidebarItemHighlightStyles('theme')}`}
+                    style={getSidebarHighlightInlineStyle('theme')}
+                  />
+                  <div 
+                    className={`p-1.5 rounded-lg flex-shrink-0 ${getSidebarItemIconStyles('theme')} transition-colors ${isSidebarCollapsed ? 'ml-0' : 'ml-0.5'}`}
+                    style={getSidebarItemIconInlineStyle('theme')}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                  </div>
+                  {!isSidebarCollapsed && (
+                    <div className="flex-1 min-w-0 pr-1 select-none">
+                      <div className="text-[10px] font-mono tracking-wider font-extrabold uppercase truncate">
+                        🎨 STYLE & COULEURS
+                      </div>
+                      <div 
+                        className={`text-[9px] hidden lg:block mt-0.5 font-sans truncate ${getSidebarItemSubtextStyles('theme')}`}
+                        style={getSidebarItemSubtextInlineStyle('theme')}
+                      >
+                        Personnaliser l'interface
+                      </div>
+                    </div>
+                  )}
+                  {!isSidebarCollapsed && (
+                    <ChevronRight 
+                      className={`w-3 h-3 ml-auto hidden lg:block transition-all duration-200 ${getSidebarItemChevronStyles('theme')}`}
+                      style={getSidebarItemSubtextInlineStyle('theme')}
+                    />
                   )}
                 </button>
               </div>
             </div>
 
             {/* SEPARATOR */}
-            <div className={`h-px my-1 ${darkMode ? 'bg-white/10' : 'bg-blue-400/30'} ${isSidebarCollapsed ? 'w-8' : 'w-full'}`} />
+            <div 
+              className={`h-px my-1 ${darkMode ? 'bg-white/10' : 'bg-blue-400/30'} ${isSidebarCollapsed ? 'w-8' : 'w-full'}`}
+              style={darkMode ? undefined : { backgroundColor: customTheme.primaryAccent + '25' }}
+            />
 
             {/* SECTION 2: SUIVI (PACKING LIST / BREAKDOWN / RECAP / SAUVEGARDES) */}
             <div className={`flex flex-col gap-1.5 ${isSidebarCollapsed ? 'items-center' : 'w-full'}`}>
               {!isSidebarCollapsed && (
-                <div className={`px-1 text-[9px] font-mono tracking-wider font-extrabold uppercase mb-1 transition-colors select-none ${
-                  darkMode ? 'text-white/40' : 'text-blue-200/90'
-                }`}>
+                <div 
+                  className={`px-1 text-[9px] font-mono tracking-wider font-extrabold uppercase mb-1 transition-colors select-none ${
+                    darkMode ? 'text-white/40' : 'text-blue-200/90'
+                  }`}
+                  style={darkMode ? undefined : { color: customTheme.sidebarText, opacity: 0.5 }}
+                >
                   📊 SUIVI & LIVRABLES
                 </div>
               )}
@@ -2795,12 +3212,17 @@ export default function App() {
                       ? 'lg:w-12 lg:h-12 lg:justify-center p-0 lg:p-2' 
                       : 'p-2.5 text-left w-full'
                   } ${getSidebarItemStyles('packing_list')}`}
+                  style={getSidebarItemInlineStyle('packing_list')}
                   title="📦 PACKING LIST : Fiches de Colisage"
                 >
                   <div
                     className={`absolute left-0 top-0 bottom-0 w-1 transition-transform duration-300 ${getSidebarItemHighlightStyles('packing_list')}`}
+                    style={getSidebarHighlightInlineStyle('packing_list')}
                   />
-                  <div className={`p-1.5 rounded-lg flex-shrink-0 ${getSidebarItemIconStyles('packing_list')} transition-colors ${isSidebarCollapsed ? 'ml-0' : 'ml-0.5'}`}>
+                  <div 
+                    className={`p-1.5 rounded-lg flex-shrink-0 ${getSidebarItemIconStyles('packing_list')} transition-colors ${isSidebarCollapsed ? 'ml-0' : 'ml-0.5'}`}
+                    style={getSidebarItemIconInlineStyle('packing_list')}
+                  >
                     <FileSpreadsheet className="w-3.5 h-3.5" />
                   </div>
                   {!isSidebarCollapsed && (
@@ -2808,13 +3230,19 @@ export default function App() {
                       <div className="text-[10px] font-mono tracking-wider font-extrabold uppercase truncate">
                         📦 PACKING LIST
                       </div>
-                      <div className={`text-[9px] hidden lg:block mt-0.5 font-sans truncate ${getSidebarItemSubtextStyles('packing_list')}`}>
+                      <div 
+                        className={`text-[9px] hidden lg:block mt-0.5 font-sans truncate ${getSidebarItemSubtextStyles('packing_list')}`}
+                        style={getSidebarItemSubtextInlineStyle('packing_list')}
+                      >
                         Fiches de Colisage
                       </div>
                     </div>
                   )}
                   {!isSidebarCollapsed && (
-                    <ChevronRight className={`w-3 h-3 ml-auto hidden lg:block transition-all duration-200 ${getSidebarItemChevronStyles('packing_list')}`} />
+                    <ChevronRight 
+                      className={`w-3 h-3 ml-auto hidden lg:block transition-all duration-200 ${getSidebarItemChevronStyles('packing_list')}`}
+                      style={getSidebarItemSubtextInlineStyle('packing_list')}
+                    />
                   )}
                 </button>
 
@@ -2826,12 +3254,17 @@ export default function App() {
                       ? 'lg:w-12 lg:h-12 lg:justify-center p-0 lg:p-2' 
                       : 'p-2.5 text-left w-full'
                   } ${getSidebarItemStyles('breakdown')}`}
+                  style={getSidebarItemInlineStyle('breakdown')}
                   title="📊 BREAKDOWN : Résumé Couleur/Taille"
                 >
                   <div
                     className={`absolute left-0 top-0 bottom-0 w-1 transition-transform duration-300 ${getSidebarItemHighlightStyles('breakdown')}`}
+                    style={getSidebarHighlightInlineStyle('breakdown')}
                   />
-                  <div className={`p-1.5 rounded-lg flex-shrink-0 ${getSidebarItemIconStyles('breakdown')} transition-colors ${isSidebarCollapsed ? 'ml-0' : 'ml-0.5'}`}>
+                  <div 
+                    className={`p-1.5 rounded-lg flex-shrink-0 ${getSidebarItemIconStyles('breakdown')} transition-colors ${isSidebarCollapsed ? 'ml-0' : 'ml-0.5'}`}
+                    style={getSidebarItemIconInlineStyle('breakdown')}
+                  >
                     <Grid className="w-3.5 h-3.5" />
                   </div>
                   {!isSidebarCollapsed && (
@@ -2839,13 +3272,19 @@ export default function App() {
                       <div className="text-[10px] font-mono tracking-wider font-extrabold uppercase truncate">
                         📊 BREAKDOWN
                       </div>
-                      <div className={`text-[9px] hidden lg:block mt-0.5 font-sans truncate ${getSidebarItemSubtextStyles('breakdown')}`}>
+                      <div 
+                        className={`text-[9px] hidden lg:block mt-0.5 font-sans truncate ${getSidebarItemSubtextStyles('breakdown')}`}
+                        style={getSidebarItemSubtextInlineStyle('breakdown')}
+                      >
                         Résumé Couleur/Taille
                       </div>
                     </div>
                   )}
                   {!isSidebarCollapsed && (
-                    <ChevronRight className={`w-3 h-3 ml-auto hidden lg:block transition-all duration-200 ${getSidebarItemChevronStyles('breakdown')}`} />
+                    <ChevronRight 
+                      className={`w-3 h-3 ml-auto hidden lg:block transition-all duration-200 ${getSidebarItemChevronStyles('breakdown')}`}
+                      style={getSidebarItemSubtextInlineStyle('breakdown')}
+                    />
                   )}
                 </button>
 
@@ -2857,12 +3296,17 @@ export default function App() {
                       ? 'lg:w-12 lg:h-12 lg:justify-center p-0 lg:p-2' 
                       : 'p-2.5 text-left w-full'
                   } ${getSidebarItemStyles('summary')}`}
+                  style={getSidebarItemInlineStyle('summary')}
                   title="📈 RECAPITULATIF : Résumé & Analyses"
                 >
                   <div
                     className={`absolute left-0 top-0 bottom-0 w-1 transition-transform duration-300 ${getSidebarItemHighlightStyles('summary')}`}
+                    style={getSidebarHighlightInlineStyle('summary')}
                   />
-                  <div className={`p-1.5 rounded-lg flex-shrink-0 ${getSidebarItemIconStyles('summary')} transition-colors ${isSidebarCollapsed ? 'ml-0' : 'ml-0.5'}`}>
+                  <div 
+                    className={`p-1.5 rounded-lg flex-shrink-0 ${getSidebarItemIconStyles('summary')} transition-colors ${isSidebarCollapsed ? 'ml-0' : 'ml-0.5'}`}
+                    style={getSidebarItemIconInlineStyle('summary')}
+                  >
                     <PieChart className="w-3.5 h-3.5" />
                   </div>
                   {!isSidebarCollapsed && (
@@ -2870,13 +3314,19 @@ export default function App() {
                       <div className="text-[10px] font-mono tracking-wider font-extrabold uppercase truncate">
                         📈 RECAP
                       </div>
-                      <div className={`text-[9px] hidden lg:block mt-0.5 font-sans truncate ${getSidebarItemSubtextStyles('summary')}`}>
+                      <div 
+                        className={`text-[9px] hidden lg:block mt-0.5 font-sans truncate ${getSidebarItemSubtextStyles('summary')}`}
+                        style={getSidebarItemSubtextInlineStyle('summary')}
+                      >
                         Résumé & Analyses
                       </div>
                     </div>
                   )}
                   {!isSidebarCollapsed && (
-                    <ChevronRight className={`w-3 h-3 ml-auto hidden lg:block transition-all duration-200 ${getSidebarItemChevronStyles('summary')}`} />
+                    <ChevronRight 
+                      className={`w-3 h-3 ml-auto hidden lg:block transition-all duration-200 ${getSidebarItemChevronStyles('summary')}`}
+                      style={getSidebarItemSubtextInlineStyle('summary')}
+                    />
                   )}
                 </button>
 
@@ -2888,12 +3338,17 @@ export default function App() {
                       ? 'lg:w-12 lg:h-12 lg:justify-center p-0 lg:p-2' 
                       : 'p-2.5 text-left w-full'
                   } ${getSidebarItemStyles('saves')}`}
+                  style={getSidebarItemInlineStyle('saves')}
                   title="💾 SAUVEGARDES : Sauvegarde & Historique"
                 >
                   <div
                     className={`absolute left-0 top-0 bottom-0 w-1 transition-transform duration-300 ${getSidebarItemHighlightStyles('saves')}`}
+                    style={getSidebarHighlightInlineStyle('saves')}
                   />
-                  <div className={`p-1.5 rounded-lg flex-shrink-0 ${getSidebarItemIconStyles('saves')} transition-colors ${isSidebarCollapsed ? 'ml-0' : 'ml-0.5'}`}>
+                  <div 
+                    className={`p-1.5 rounded-lg flex-shrink-0 ${getSidebarItemIconStyles('saves')} transition-colors ${isSidebarCollapsed ? 'ml-0' : 'ml-0.5'}`}
+                    style={getSidebarItemIconInlineStyle('saves')}
+                  >
                     <History className="w-3.5 h-3.5" />
                   </div>
                   {!isSidebarCollapsed && (
@@ -2901,13 +3356,19 @@ export default function App() {
                       <div className="text-[10px] font-mono tracking-wider font-extrabold uppercase truncate">
                         💾 SAUVEGARDES
                       </div>
-                      <div className={`text-[9px] hidden lg:block mt-0.5 font-sans truncate ${getSidebarItemSubtextStyles('saves')}`}>
+                      <div 
+                        className={`text-[9px] hidden lg:block mt-0.5 font-sans truncate ${getSidebarItemSubtextStyles('saves')}`}
+                        style={getSidebarItemSubtextInlineStyle('saves')}
+                      >
                         Sauvegarde & Historique
                       </div>
                     </div>
                   )}
                   {!isSidebarCollapsed && (
-                    <ChevronRight className={`w-3 h-3 ml-auto hidden lg:block transition-all duration-200 ${getSidebarItemChevronStyles('saves')}`} />
+                    <ChevronRight 
+                      className={`w-3 h-3 ml-auto hidden lg:block transition-all duration-200 ${getSidebarItemChevronStyles('saves')}`}
+                      style={getSidebarItemSubtextInlineStyle('saves')}
+                    />
                   )}
                 </button>
 
@@ -2919,12 +3380,17 @@ export default function App() {
                       ? 'lg:w-12 lg:h-12 lg:justify-center p-0 lg:p-2' 
                       : 'p-2.5 text-left w-full'
                   } ${getSidebarItemStyles('labels')}`}
+                  style={getSidebarItemInlineStyle('labels')}
                   title="🏷️ ÉTIQUETTES : Impression d'étiquettes colis réelles A6"
                 >
                   <div
                     className={`absolute left-0 top-0 bottom-0 w-1 transition-transform duration-300 ${getSidebarItemHighlightStyles('labels')}`}
+                    style={getSidebarHighlightInlineStyle('labels')}
                   />
-                  <div className={`p-1.5 rounded-lg flex-shrink-0 ${getSidebarItemIconStyles('labels')} transition-colors ${isSidebarCollapsed ? 'ml-0' : 'ml-0.5'}`}>
+                  <div 
+                    className={`p-1.5 rounded-lg flex-shrink-0 ${getSidebarItemIconStyles('labels')} transition-colors ${isSidebarCollapsed ? 'ml-0' : 'ml-0.5'}`}
+                    style={getSidebarItemIconInlineStyle('labels')}
+                  >
                     <Printer className="w-3.5 h-3.5" />
                   </div>
                   {!isSidebarCollapsed && (
@@ -2932,13 +3398,19 @@ export default function App() {
                       <div className="text-[10px] font-mono tracking-wider font-extrabold uppercase truncate">
                         🏷️ ÉTIQUETTES A6
                       </div>
-                      <div className={`text-[9px] hidden lg:block mt-0.5 font-sans truncate ${getSidebarItemSubtextStyles('labels')}`}>
+                      <div 
+                        className={`text-[9px] hidden lg:block mt-0.5 font-sans truncate ${getSidebarItemSubtextStyles('labels')}`}
+                        style={getSidebarItemSubtextInlineStyle('labels')}
+                      >
                         Impression étiquettes Colis
                       </div>
                     </div>
                   )}
                   {!isSidebarCollapsed && (
-                    <ChevronRight className={`w-3 h-3 ml-auto hidden lg:block transition-all duration-200 ${getSidebarItemChevronStyles('labels')}`} />
+                    <ChevronRight 
+                      className={`w-3 h-3 ml-auto hidden lg:block transition-all duration-200 ${getSidebarItemChevronStyles('labels')}`}
+                      style={getSidebarItemSubtextInlineStyle('labels')}
+                    />
                   )}
                 </button>
               </div>
@@ -4359,20 +4831,14 @@ export default function App() {
                                       setSelectedExportColors([...selectedExportColors, res.nom]);
                                     }
                                   }}
-                                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs cursor-pointer transition-all ${
-                                    idx === 0
-                                      ? 'text-[#e1dde3]'
-                                      : idx === 1
-                                        ? 'text-[#d5d4d4] font-bold'
-                                        : 'font-semibold'
-                                  } ${
+                                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer transition-all ${
                                     isChecked
                                       ? (darkMode 
-                                        ? `bg-white/10 border-white ${idx > 1 ? 'text-white' : ''}` 
-                                        : `bg-slate-200 border-slate-400 ${idx > 1 ? 'text-slate-800 font-bold' : ''}`)
+                                        ? 'bg-white/15 border-white text-white shadow-sm' 
+                                        : 'bg-slate-200 border-slate-400 text-slate-800 shadow-sm')
                                       : (darkMode 
-                                        ? `bg-transparent border-white/5 opacity-60 hover:opacity-100 hover:border-white/10 ${idx > 1 ? 'text-slate-500' : ''}` 
-                                        : `bg-transparent border-slate-200 opacity-60 hover:opacity-100 hover:border-slate-300 ${idx > 1 ? 'text-slate-500' : ''}`)
+                                        ? 'bg-transparent border-white/5 text-slate-400 hover:text-white hover:border-white/10 hover:bg-white/5 opacity-60 hover:opacity-100' 
+                                        : 'bg-transparent border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-350 hover:bg-slate-50 opacity-60 hover:opacity-100')
                                   }`}
                                 >
                                   <div className="w-3 h-3 rounded-full flex items-center justify-center border border-slate-700/40" style={{ backgroundColor: res.color }}>
@@ -4403,9 +4869,7 @@ export default function App() {
                             }`}
                           >
                             <div className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border mb-3 font-mono font-bold uppercase text-xs ${
-                              ci === 0
-                                ? 'bg-white/5 border-white/10 text-[#ffffff]'
-                                : (darkMode ? 'bg-white/5 border-white/10 text-white' : 'bg-slate-100 border-slate-200 text-slate-800')
+                              darkMode ? 'bg-white/5 border-white/10 text-white' : 'bg-slate-100 border-slate-200 text-slate-800'
                             }`}>
                               <div className="w-3 h-3 rounded-full" style={{ backgroundColor: res.color }} />
                               PACKING LIST — COULEUR : {res.nom}
@@ -4414,17 +4878,13 @@ export default function App() {
                             <div className="pb-3 text-xs">
                               {res.mode === 'strict_solide' ? (
                                 <span className={`px-2.5 py-1 rounded border font-bold font-mono tracking-wide ${
-                                  ci === 0
-                                    ? 'bg-white/10 border-white/20 text-[#ffffff]'
-                                    : (darkMode ? 'bg-white/10 border-white/20 text-white' : 'bg-slate-100 border-slate-300 text-slate-800')
+                                  darkMode ? 'bg-white/10 border-white/20 text-white' : 'bg-slate-100 border-slate-300 text-slate-800'
                                 }`}>
                                   🔒 SOLID PACK STRICT
                                 </span>
                               ) : (
                                 <span className={`px-2.5 py-1 rounded border font-bold font-mono tracking-wide ${
-                                  ci === 0
-                                    ? 'bg-white/10 border-white/20 text-[#ffffff]'
-                                    : (darkMode ? 'bg-white/10 border-white/20 text-white' : 'bg-slate-100 border-slate-300 text-slate-800')
+                                  darkMode ? 'bg-white/10 border-white/20 text-white' : 'bg-slate-100 border-slate-300 text-slate-800'
                                 }`}>
                                   🔀 MIXED PACK AUTORISÉ (max {maxSizesPerBox} tailles)
                                 </span>
@@ -4477,7 +4937,19 @@ export default function App() {
                                             </td>
                                           </>
                                         )}
-                                        {printColumns.color && <td className="px-2 font-bold col-color-lbl" style={{ color: res.color }}>{res.nom}</td>}
+                                        {printColumns.color && (
+                                          <td className="px-2 col-color-lbl text-center py-1">
+                                            <span 
+                                              className="inline-block px-2.5 py-0.5 rounded text-[11px] font-extrabold uppercase tracking-wider shadow-xs border border-black/10" 
+                                              style={{ 
+                                                backgroundColor: res.color, 
+                                                color: getContrastColor(res.color) 
+                                              }}
+                                            >
+                                              {res.nom}
+                                            </span>
+                                          </td>
+                                        )}
                                         {showSkuCol && <td className={`px-3 truncate max-w-28 text-[11px] font-semibold col-sku-lbl ${darkMode ? 'text-white' : 'text-emerald-700'}`}>{row.skus.join('/') || '—'}</td>}
                                         {printColumns.sizes && activeColorSizes.map(t => (
                                           <td key={t} className={`px-2 font-bold col-sizes-cells ${darkMode ? 'text-white' : 'text-slate-800'}`}>{row.sizes[t] || ''}</td>
@@ -4497,7 +4969,19 @@ export default function App() {
                                     darkMode ? 'border-t-white border-b-white/10 bg-white/5 text-white divide-white/10' : 'border-t-slate-800 border-b-slate-200 bg-slate-100/40 text-slate-900 divide-slate-200'
                                   }`}>
                                     {printColumns.ctn && <td colSpan={2} className="py-2.5 px-3 text-center col-ctn-index">TOTALE</td>}
-                                    {printColumns.color && <td className="px-2 font-extrabold col-color-lbl">{res.nom}</td>}
+                                    {printColumns.color && (
+                                      <td className="px-2 col-color-lbl text-center py-1">
+                                        <span 
+                                          className="inline-block px-2.5 py-0.5 rounded text-[11px] font-extrabold uppercase tracking-wider shadow-xs border border-black/10" 
+                                          style={{ 
+                                            backgroundColor: res.color, 
+                                            color: getContrastColor(res.color) 
+                                          }}
+                                        >
+                                          {res.nom}
+                                        </span>
+                                      </td>
+                                    )}
                                     {(() => {
                                       const origColor = colors.find(c => c.nom === res.nom);
                                       const showSkuCol = printColumns.sku && !!(origColor && Object.values(origColor.sizes || {}).some((s: any) => s.sku && String(s.sku).trim() !== ''));
@@ -4582,7 +5066,19 @@ export default function App() {
                                               <td className={`py-2 px-2 text-center font-bold col-ctn-index ${darkMode ? 'text-white' : 'text-slate-800'}`}>{currentEnd}</td>
                                             </>
                                           )}
-                                          {printColumns.color && <td className="px-2 font-bold col-color-lbl" style={{ color: res.color }}>{res.nom}</td>}
+                                          {printColumns.color && (
+                                            <td className="px-2 col-color-lbl text-center py-1">
+                                              <span 
+                                                className="inline-block px-2.5 py-0.5 rounded text-[11px] font-extrabold uppercase tracking-wider shadow-xs border border-black/10" 
+                                                style={{ 
+                                                  backgroundColor: res.color, 
+                                                  color: getContrastColor(res.color) 
+                                                }}
+                                              >
+                                                {res.nom}
+                                              </span>
+                                            </td>
+                                          )}
                                           {showSkuColCombined && <td className={`px-3 truncate max-w-28 text-[11px] col-sku-lbl ${darkMode ? 'text-white' : 'text-emerald-700'}`}>{row.skus.join('/') || '—'}</td>}
                                           {printColumns.sizes && summaryUniqueSizes.map(t => (
                                             <td key={t} className={`px-2 text-center font-bold col-sizes-cells ${darkMode ? 'text-white' : 'text-slate-800'}`}>{row.sizes[t] || ''}</td>
@@ -4682,7 +5178,17 @@ export default function App() {
                             <tbody className={`divide-y font-mono font-medium ${darkMode ? 'divide-white/10' : 'divide-slate-200'}`}>
                               {activeResults.map((res, ci) => (
                                 <tr key={ci} className={`divide-x ${darkMode ? 'hover:bg-white/5 divide-white/10' : 'hover:bg-slate-100/40 divide-slate-200'}`}>
-                                  <td className="py-2 px-3 text-left font-bold" style={{ color: res.color }}>{res.nom}</td>
+                                  <td className="py-2 px-3 text-left font-bold">
+                                    <span 
+                                      className="inline-block px-2.5 py-0.5 rounded text-[11px] font-extrabold uppercase tracking-wider shadow-xs border border-black/10" 
+                                      style={{ 
+                                        backgroundColor: res.color, 
+                                        color: getContrastColor(res.color) 
+                                      }}
+                                    >
+                                      {res.nom}
+                                    </span>
+                                  </td>
                                   {summaryUniqueSizes.map(t => (
                                     <td key={t} className={`font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>{res.totals.sizes[t] || ''}</td>
                                   ))}
@@ -5871,6 +6377,416 @@ export default function App() {
                 </motion.div>
               )}
 
+              {activeInputTab === 'theme' && (() => {
+                const hasPendingChanges = JSON.stringify(stagedTheme) !== JSON.stringify(customTheme);
+                return (
+                  <motion.div
+                    key="theme-section"
+                    initial={{ opacity: 0, x: 15 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -15 }}
+                    transition={{ duration: 0.15 }}
+                    className="space-y-6"
+                  >
+                    <div className={`rounded-xl border p-6 space-y-6 ${darkMode ? 'bg-[#0F0F12] border-white/10' : 'bg-white border-slate-250'} shadow-sm`}>
+                      
+                      {/* Header of the theme panel */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/5">
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg">
+                            <Sparkles className="w-5 h-5" style={{ color: stagedTheme.primaryAccent }} />
+                          </div>
+                          <div>
+                            <h3 className={`text-base font-bold font-mono uppercase ${darkMode ? 'text-white' : 'text-slate-800'}`}>🎨 Personnalisation du Design</h3>
+                            <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                              Personnalisez les couleurs des textes, en-têtes de fiches, arrière-plans et en-têtes de tableaux.
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 self-end sm:self-center">
+                          <button
+                            onClick={() => {
+                              setCustomTheme(stagedTheme);
+                              triggerToast('🎨 Style et couleurs appliqués avec succès !', 'success');
+                            }}
+                            className="px-4 py-2 text-xs font-mono font-bold rounded transition-all cursor-pointer flex items-center gap-1.5 shadow-md active:scale-[0.98]"
+                            style={{ backgroundColor: stagedTheme.primaryAccent, color: '#000000' }}
+                          >
+                            <span>💾 Enregistrer & Appliquer</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Pending changes alert banner */}
+                      {hasPendingChanges && (
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-200 animate-pulse">
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-xl">⚠️</span>
+                            <div className="text-left">
+                              <div className="text-xs font-bold font-mono">MODIFICATIONS DE STYLE NON ENREGISTRÉES</div>
+                              <div className="text-[10px] opacity-80">Les couleurs modifiées sont visibles dans l'aperçu dynamique ci-dessous mais ne sont pas encore actives sur le reste de l'application.</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 w-full sm:w-auto flex-shrink-0">
+                            <button
+                              onClick={() => {
+                                setStagedTheme(customTheme);
+                                triggerToast('↩️ Modifications annulées', 'info');
+                              }}
+                              className="px-3 py-1.5 text-xs font-mono font-bold rounded border border-white/10 hover:bg-white/10 transition-all cursor-pointer w-full sm:w-auto text-center"
+                            >
+                              ANNULER
+                            </button>
+                            <button
+                              onClick={() => {
+                                setCustomTheme(stagedTheme);
+                                triggerToast('🎨 Design & couleurs enregistrés !', 'success');
+                              }}
+                              className="px-4 py-1.5 text-xs font-mono font-bold rounded text-slate-950 font-extrabold transition-all cursor-pointer w-full sm:w-auto text-center shadow-lg"
+                              style={{ backgroundColor: stagedTheme.primaryAccent }}
+                            >
+                              💾 ENREGISTRER
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Pre-made presets section */}
+                      <div className="space-y-3">
+                        <h4 className={`text-xs font-mono font-bold uppercase tracking-wider ${darkMode ? 'text-white/80' : 'text-slate-700'}`}>
+                           modèles prédéfinis (Thèmes rapides)
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                          {THEME_PRESETS.map((preset) => (
+                            <button
+                              key={preset.name}
+                              onClick={() => {
+                                setStagedTheme({
+                                  primaryAccent: preset.primaryAccent,
+                                  headerBg: preset.headerBg,
+                                  headerText: preset.headerText,
+                                  tableHeaderBg: preset.tableHeaderBg,
+                                  tableHeaderTextColor: preset.tableHeaderTextColor,
+                                  textColor: preset.textColor,
+                                  cardBg: preset.cardBg,
+                                  sidebarBg: preset.sidebarBg,
+                                  sidebarText: preset.sidebarText,
+                                });
+                                triggerToast(`Modèle "${preset.name}" sélectionné. Cliquez sur Enregistrer pour l'appliquer.`, 'info');
+                              }}
+                              className={`p-3 rounded-xl border text-left cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex flex-col justify-between h-28 ${
+                                stagedTheme.primaryAccent === preset.primaryAccent && stagedTheme.headerBg === preset.headerBg
+                                  ? (darkMode ? 'bg-white/5 border-white text-white font-bold' : 'bg-slate-50 border-blue-600 text-slate-950 font-bold')
+                                  : (darkMode ? 'bg-transparent border-white/5 text-slate-300 hover:bg-white/5' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50')
+                              }`}
+                            >
+                              <span className="text-xs font-mono font-bold uppercase truncate w-full">{preset.name}</span>
+                              
+                              {/* Color previews dots */}
+                              <div className="flex items-center gap-1.5 mt-2">
+                                <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: preset.primaryAccent }} title="Couleur d'accentuation" />
+                                <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: preset.headerBg }} title="Fond des en-têtes" />
+                                <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: preset.tableHeaderBg }} title="En-tête de tableau" />
+                                <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: preset.cardBg }} title="Arrière-plan des fiches" />
+                                <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: preset.sidebarBg }} title="Barre latérale" />
+                              </div>
+
+                              <span className="text-[9px] font-mono opacity-60 mt-1">Accent : {preset.primaryAccent}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Fine-Tuning adjustment panel */}
+                      <div className="space-y-4 pt-4 border-t border-white/5">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <h4 className={`text-xs font-mono font-bold uppercase tracking-wider ${darkMode ? 'text-white/80' : 'text-slate-700'}`}>
+                            🎛️ Personnalisation Précise (Tous les éléments)
+                          </h4>
+                          <button
+                            onClick={() => {
+                              setStagedTheme({
+                                primaryAccent: '#06B6D4',
+                                headerBg: '#083344',
+                                headerText: '#ECFEFF',
+                                tableHeaderBg: '#155E75',
+                                tableHeaderTextColor: '#FFFFFF',
+                                textColor: '#F0FDFA',
+                                cardBg: '#0F172A',
+                                sidebarBg: '#083344',
+                                sidebarText: '#CCFBF1',
+                              });
+                              triggerToast('🔄 Réinitialisé aux valeurs par défaut (Deep Ocean Teal). Cliquez sur Enregistrer pour appliquer !', 'info');
+                            }}
+                            className={`px-2.5 py-1 text-[10px] font-mono font-bold rounded border cursor-pointer hover:bg-red-500/10 hover:border-red-500/30 text-red-400 transition-all ${
+                              darkMode ? 'bg-white/5 border-white/10' : 'bg-slate-100 border-slate-300'
+                            }`}
+                          >
+                            🔄 REINITIALISER AU THÈME PAR DÉFAUT
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                          {/* 1. Primary accent */}
+                          <div className="space-y-1.5">
+                            <label className={`text-[10px] font-mono uppercase font-black block ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                              Couleur Accentuation & Boutons
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={stagedTheme.primaryAccent}
+                                onChange={(e) => setStagedTheme({ ...stagedTheme, primaryAccent: e.target.value })}
+                                className="w-10 h-8 rounded border border-white/10 cursor-pointer"
+                              />
+                              <input
+                                type="text"
+                                value={stagedTheme.primaryAccent}
+                                onChange={(e) => setStagedTheme({ ...stagedTheme, primaryAccent: e.target.value })}
+                                className={`flex-1 px-2.5 py-1.5 font-mono text-xs rounded border uppercase ${getInputStyles()}`}
+                              />
+                            </div>
+                            <span className="text-[9px] text-slate-400 block">Utilisé pour les boutons actifs, les sélections et les badges de statut.</span>
+                          </div>
+
+                          {/* 2. Header Bg */}
+                          <div className="space-y-1.5">
+                            <label className={`text-[10px] font-mono uppercase font-black block ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                              Fond des En-têtes (Rubans)
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={stagedTheme.headerBg}
+                                onChange={(e) => setStagedTheme({ ...stagedTheme, headerBg: e.target.value })}
+                                className="w-10 h-8 rounded border border-white/10 cursor-pointer"
+                              />
+                              <input
+                                type="text"
+                                value={stagedTheme.headerBg}
+                                onChange={(e) => setStagedTheme({ ...stagedTheme, headerBg: e.target.value })}
+                                className={`flex-1 px-2.5 py-1.5 font-mono text-xs rounded border uppercase ${getInputStyles()}`}
+                              />
+                            </div>
+                            <span className="text-[9px] text-slate-400 block">Couleur d'arrière-plan des rubans d'en-tête de section.</span>
+                          </div>
+
+                          {/* 3. Header text */}
+                          <div className="space-y-1.5">
+                            <label className={`text-[10px] font-mono uppercase font-black block ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                              Texte des En-têtes
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={stagedTheme.headerText}
+                                onChange={(e) => setStagedTheme({ ...stagedTheme, headerText: e.target.value })}
+                                className="w-10 h-8 rounded border border-white/10 cursor-pointer"
+                              />
+                              <input
+                                type="text"
+                                value={stagedTheme.headerText}
+                                onChange={(e) => setStagedTheme({ ...stagedTheme, headerText: e.target.value })}
+                                className={`flex-1 px-2.5 py-1.5 font-mono text-xs rounded border uppercase ${getInputStyles()}`}
+                              />
+                            </div>
+                            <span className="text-[9px] text-slate-400 block">Couleur d'écriture pour les titres de section et rubans d'en-têtes.</span>
+                          </div>
+
+                          {/* 4. Table Header Bg */}
+                          <div className="space-y-1.5">
+                            <label className={`text-[10px] font-mono uppercase font-black block ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                              En-têtes de Tableaux - Fond
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={stagedTheme.tableHeaderBg}
+                                onChange={(e) => setStagedTheme({ ...stagedTheme, tableHeaderBg: e.target.value })}
+                                className="w-10 h-8 rounded border border-white/10 cursor-pointer"
+                              />
+                              <input
+                                type="text"
+                                value={stagedTheme.tableHeaderBg}
+                                onChange={(e) => setStagedTheme({ ...stagedTheme, tableHeaderBg: e.target.value })}
+                                className={`flex-1 px-2.5 py-1.5 font-mono text-xs rounded border uppercase ${getInputStyles()}`}
+                              />
+                            </div>
+                            <span className="text-[9px] text-slate-400 block">Arrière-plan des titres de colonnes (taille, quantité, etc.).</span>
+                          </div>
+
+                          {/* 5. Table Header text */}
+                          <div className="space-y-1.5">
+                            <label className={`text-[10px] font-mono uppercase font-black block ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                              En-têtes de Tableaux - Texte
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={stagedTheme.tableHeaderTextColor}
+                                onChange={(e) => setStagedTheme({ ...stagedTheme, tableHeaderTextColor: e.target.value })}
+                                className="w-10 h-8 rounded border border-white/10 cursor-pointer"
+                              />
+                              <input
+                                type="text"
+                                value={stagedTheme.tableHeaderTextColor}
+                                onChange={(e) => setStagedTheme({ ...stagedTheme, tableHeaderTextColor: e.target.value })}
+                                className={`flex-1 px-2.5 py-1.5 font-mono text-xs rounded border uppercase ${getInputStyles()}`}
+                              />
+                            </div>
+                            <span className="text-[9px] text-slate-400 block">Couleur d'écriture pour les titres de colonnes de tableaux.</span>
+                          </div>
+
+                          {/* 6. Body Text */}
+                          <div className="space-y-1.5">
+                            <label className={`text-[10px] font-mono uppercase font-black block ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                              Couleur Principale des Textes
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={stagedTheme.textColor}
+                                onChange={(e) => setStagedTheme({ ...stagedTheme, textColor: e.target.value })}
+                                className="w-10 h-8 rounded border border-white/10 cursor-pointer"
+                              />
+                              <input
+                                type="text"
+                                value={stagedTheme.textColor}
+                                onChange={(e) => setStagedTheme({ ...stagedTheme, textColor: e.target.value })}
+                                className={`flex-1 px-2.5 py-1.5 font-mono text-xs rounded border uppercase ${getInputStyles()}`}
+                              />
+                            </div>
+                            <span className="text-[9px] text-slate-400 block">Utilisé pour l'affichage de tous les textes généraux de fiches.</span>
+                          </div>
+
+                          {/* 7. Card Bg */}
+                          <div className="space-y-1.5">
+                            <label className={`text-[10px] font-mono uppercase font-black block ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                              Fond des Fiches / Cartons
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={stagedTheme.cardBg}
+                                onChange={(e) => setStagedTheme({ ...stagedTheme, cardBg: e.target.value })}
+                                className="w-10 h-8 rounded border border-white/10 cursor-pointer"
+                              />
+                              <input
+                                type="text"
+                                value={stagedTheme.cardBg}
+                                onChange={(e) => setStagedTheme({ ...stagedTheme, cardBg: e.target.value })}
+                                className={`flex-1 px-2.5 py-1.5 font-mono text-xs rounded border uppercase ${getInputStyles()}`}
+                              />
+                            </div>
+                            <span className="text-[9px] text-slate-400 block">Arrière-plan des conteneurs de fiches et grilles de colisage.</span>
+                          </div>
+
+                          {/* 8. Sidebar Bg */}
+                          <div className="space-y-1.5">
+                            <label className={`text-[10px] font-mono uppercase font-black block ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                              Menu Latéral - Fond
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={stagedTheme.sidebarBg}
+                                onChange={(e) => setStagedTheme({ ...stagedTheme, sidebarBg: e.target.value })}
+                                className="w-10 h-8 rounded border border-white/10 cursor-pointer"
+                              />
+                              <input
+                                type="text"
+                                value={stagedTheme.sidebarBg}
+                                onChange={(e) => setStagedTheme({ ...stagedTheme, sidebarBg: e.target.value })}
+                                className={`flex-1 px-2.5 py-1.5 font-mono text-xs rounded border uppercase ${getInputStyles()}`}
+                              />
+                            </div>
+                            <span className="text-[9px] text-slate-400 block">Couleur de fond du menu ruban de navigation à gauche.</span>
+                          </div>
+
+                          {/* 9. Sidebar Text */}
+                          <div className="space-y-1.5">
+                            <label className={`text-[10px] font-mono uppercase font-black block ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                              Menu Latéral - Texte & Liens
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={stagedTheme.sidebarText}
+                                onChange={(e) => setStagedTheme({ ...stagedTheme, sidebarText: e.target.value })}
+                                className="w-10 h-8 rounded border border-white/10 cursor-pointer"
+                              />
+                              <input
+                                type="text"
+                                value={stagedTheme.sidebarText}
+                                onChange={(e) => setStagedTheme({ ...stagedTheme, sidebarText: e.target.value })}
+                                className={`flex-1 px-2.5 py-1.5 font-mono text-xs rounded border uppercase ${getInputStyles()}`}
+                              />
+                            </div>
+                            <span className="text-[9px] text-slate-400 block">Couleur d'écriture pour les rubriques de navigation inactives.</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Interactive Real-Time Preview Area */}
+                      <div className="pt-4 border-t border-white/5 space-y-3">
+                        <h4 className={`text-xs font-mono font-bold uppercase tracking-wider ${darkMode ? 'text-white/80' : 'text-slate-700'}`}>
+                          👁️ Aperçu de votre Design en Temps Réel
+                        </h4>
+                        <div className="p-5 rounded-2xl border transition-colors flex flex-col md:flex-row gap-5" style={{ backgroundColor: stagedTheme.cardBg, borderColor: stagedTheme.primaryAccent + '40' }}>
+                          
+                          {/* Fake Sidebar Mini Preview */}
+                          <div className="w-full md:w-48 rounded-xl p-3 space-y-2" style={{ backgroundColor: stagedTheme.sidebarBg }}>
+                            <span className="text-[8px] font-mono block uppercase tracking-widest opacity-60" style={{ color: stagedTheme.sidebarText }}>🧭 Menu Navigation</span>
+                            <div className="p-2 rounded-lg text-[10px] font-bold font-mono uppercase flex items-center gap-1.5" style={{ backgroundColor: stagedTheme.primaryAccent, color: stagedTheme.headerText }}>
+                              <span>✓</span> Onglet Actif
+                            </div>
+                            <div className="p-2 rounded-lg text-[10px] font-mono" style={{ color: stagedTheme.sidebarText }}>
+                              Onglet Inactif
+                            </div>
+                          </div>
+
+                          {/* Fake Content Area with Table */}
+                          <div className="flex-1 space-y-3">
+                            {/* Fake section header */}
+                            <div className="p-2 rounded-lg border text-[10px] font-bold font-mono uppercase flex items-center justify-between" style={{ backgroundColor: stagedTheme.headerBg, color: stagedTheme.headerText, borderColor: stagedTheme.primaryAccent + '30' }}>
+                              <span>📋 EXEMPLE DE RUBAN PACKING LIST</span>
+                              <span className="px-1.5 py-0.5 rounded text-[8px]" style={{ backgroundColor: stagedTheme.primaryAccent, color: stagedTheme.headerText }}>STATUT</span>
+                            </div>
+
+                            {/* Fake body text */}
+                            <p className="text-xs leading-relaxed" style={{ color: stagedTheme.textColor }}>
+                              Exemple de texte descriptif de colisage. Toutes les couleurs sont synchronisées en temps réel. Lorsque vous modifiez les couleurs ci-dessus, l'ensemble de l'interface s'ajuste instantanément.
+                            </p>
+
+                            {/* Fake Table */}
+                            <div className="border rounded-lg overflow-hidden" style={{ borderColor: stagedTheme.primaryAccent + '20' }}>
+                              <table className="w-full text-left border-collapse">
+                                <thead>
+                                  <tr style={{ backgroundColor: stagedTheme.tableHeaderBg, color: stagedTheme.tableHeaderTextColor }}>
+                                    <th className="p-2 text-[10px] font-mono uppercase">Colis</th>
+                                    <th className="p-2 text-[10px] font-mono uppercase">Taille</th>
+                                    <th className="p-2 text-[10px] font-mono uppercase text-right">Qté</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr className="border-t text-xs" style={{ borderColor: stagedTheme.primaryAccent + '15', color: stagedTheme.textColor }}>
+                                    <td className="p-2 font-mono">CTN 01-10</td>
+                                    <td className="p-2">XL</td>
+                                    <td className="p-2 text-right">250 Pcs</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </motion.div>
+                );
+              })()}
+
               {activeInputTab === 'labels' && (
                 <motion.div
                   key="labels-section"
@@ -6007,7 +6923,19 @@ export default function App() {
                                   </td>
                                 </>
                               )}
-                              {printColumns.color && <td className="px-2 font-bold col-color-lbl" style={{ color: res.color }}>{res.nom}</td>}
+                              {printColumns.color && (
+                                <td className="px-2 col-color-lbl text-center py-1">
+                                  <span 
+                                    className="inline-block px-2.5 py-0.5 rounded text-[11px] font-extrabold uppercase tracking-wider shadow-xs border border-black/10" 
+                                    style={{ 
+                                      backgroundColor: res.color, 
+                                      color: getContrastColor(res.color) 
+                                    }}
+                                  >
+                                    {res.nom}
+                                  </span>
+                                </td>
+                              )}
                               {showSkuCol && <td className="px-3 truncate max-w-28 text-[11px] text-emerald-500 font-semibold col-sku-lbl">{row.skus.join('/') || '—'}</td>}
                               {printColumns.sizes && activeColorSizes.map(t => (
                                 <td key={t} className={`px-2 font-bold col-sizes-cells ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{row.sizes[t] || ''}</td>
@@ -6025,7 +6953,19 @@ export default function App() {
                         {/* Totals row index */}
                         <tr className="bg-amber-500/10 dark:bg-amber-955/30 text-amber-800 dark:text-amber-400 font-black border-t-2 border-t-amber-500/70 border-b border-dark-900 divide-x divide-slate-800">
                           {printColumns.ctn && <td colSpan={2} className="py-2.5 px-3 text-center col-ctn-index">TOTALE</td>}
-                          {printColumns.color && <td className="px-2 font-extrabold col-color-lbl">{res.nom}</td>}
+                          {printColumns.color && (
+                            <td className="px-2 col-color-lbl text-center py-1">
+                              <span 
+                                className="inline-block px-2.5 py-0.5 rounded text-[11px] font-extrabold uppercase tracking-wider shadow-xs border border-black/10" 
+                                style={{ 
+                                  backgroundColor: res.color, 
+                                  color: getContrastColor(res.color) 
+                                }}
+                              >
+                                {res.nom}
+                              </span>
+                            </td>
+                          )}
                           {(() => {
                             const origColor = colors.find(c => c.nom === res.nom);
                             const showSkuCol = printColumns.sku && !!(origColor && Object.values(origColor.sizes || {}).some((s: any) => s.sku && String(s.sku).trim() !== ''));
@@ -6170,7 +7110,19 @@ export default function App() {
                                     <td className={`py-2 px-2 text-center font-bold col-ctn-index ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>{currentEnd}</td>
                                   </>
                                 )}
-                                {printColumns.color && <td className="px-2 font-bold col-color-lbl" style={{ color: res.color }}>{res.nom}</td>}
+                                {printColumns.color && (
+                                  <td className="px-2 col-color-lbl text-center py-1">
+                                    <span 
+                                      className="inline-block px-2.5 py-0.5 rounded text-[11px] font-extrabold uppercase tracking-wider shadow-xs border border-black/10" 
+                                      style={{ 
+                                        backgroundColor: res.color, 
+                                        color: getContrastColor(res.color) 
+                                      }}
+                                    >
+                                      {res.nom}
+                                    </span>
+                                  </td>
+                                )}
                                 {showSkuColCombined && <td className="px-3 truncate max-w-28 text-[11px] text-emerald-500 col-sku-lbl">{row.skus.join('/') || '—'}</td>}
                                 {printColumns.sizes && summaryUniqueSizes.map(t => (
                                   <td key={t} className={`px-2 text-center font-bold col-sizes-cells ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{row.sizes[t] || ''}</td>
@@ -6233,7 +7185,17 @@ export default function App() {
                         <tbody className={`divide-y font-mono font-medium ${darkMode ? 'divide-slate-800 text-slate-200' : 'divide-slate-200 text-slate-800'}`}>
                           {activeResults.map((res, ci) => (
                             <tr key={ci} className={`hover:bg-slate-800/40 divide-x ${darkMode ? 'divide-slate-800/40' : 'divide-slate-200'}`}>
-                              <td className="py-2 px-3 text-left font-bold" style={{ color: res.color }}>{res.nom}</td>
+                              <td className="py-2 px-3 text-left font-bold">
+                                <span 
+                                  className="inline-block px-2.5 py-0.5 rounded text-[11px] font-extrabold uppercase tracking-wider shadow-xs border border-black/10" 
+                                  style={{ 
+                                    backgroundColor: res.color, 
+                                    color: getContrastColor(res.color) 
+                                  }}
+                                >
+                                  {res.nom}
+                                </span>
+                              </td>
                               {summaryUniqueSizes.map(t => (
                                 <td key={t} className="font-bold">{res.totals.sizes[t] || ''}</td>
                               ))}
@@ -6319,7 +7281,17 @@ export default function App() {
                     </thead>
                     <tbody className={`divide-y font-mono font-medium ${darkMode ? 'divide-slate-800 text-slate-200' : 'divide-slate-200 text-slate-800'}`}>
                       <tr className={`divide-x ${darkMode ? 'divide-slate-800' : 'divide-slate-200'}`}>
-                        <td className="py-2 px-3 text-left font-bold" style={{ color: activeResults[0].color }}>{activeResults[0].nom}</td>
+                        <td className="py-2 px-3 text-left font-bold">
+                          <span 
+                            className="inline-block px-2.5 py-0.5 rounded text-[11px] font-extrabold uppercase tracking-wider shadow-xs border border-black/10" 
+                            style={{ 
+                              backgroundColor: activeResults[0].color, 
+                              color: getContrastColor(activeResults[0].color) 
+                            }}
+                          >
+                            {activeResults[0].nom}
+                          </span>
+                        </td>
                         {activeResults[0].tailles.filter(t => isStandardSizeAlwaysShown(t) || (colors[activeResults[0].colorIndex ?? 0]?.sizes[t]?.qtyTot || 0) > 0).map(t => (
                           <td key={t} className="font-bold">{activeResults[0].totals.sizes[t] || ''}</td>
                         ))}
